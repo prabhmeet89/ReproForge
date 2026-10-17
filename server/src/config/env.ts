@@ -17,6 +17,12 @@ const envSchema = z.object({
     .default("development"),
 
   CLIENT_URL: z.string().url().default("http://localhost:5173"),
+
+  SEED_DEMO_DATA: z
+    .string()
+    .optional()
+    .default("false")
+    .transform((val) => val === "true"),
 });
 
 // Validate karo — agar koi variable missing ya galat hai toh clear error message dega
