@@ -14,8 +14,19 @@ export function Navbar() {
 
   return (
     <header className={`fixed inset-x-0 z-50 flex justify-center px-4 transition-all duration-300 ${scrolled ? "top-2" : "top-4"}`}>
-      <nav className={`w-full max-w-5xl rounded-full border backdrop-blur-xl px-5 flex items-center justify-between transition-all duration-300 ${scrolled ? "bg-gray-950/95 border-gray-700/60 py-1.5 shadow-lg" : "bg-gray-950/80 border-gray-800/80 py-2.5 shadow-2xl"}`}>
-        {/* Brand Logo */}
+      <nav
+        onPointerMove={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          const x = ((e.clientX - r.left) / r.width) * 100;
+          const y = ((e.clientY - r.top) / r.height) * 100;
+          e.currentTarget.style.setProperty("--mx", `${x}%`);
+          e.currentTarget.style.setProperty("--my", `${y}%`);
+        }}
+        className={`w-full max-w-5xl rounded-full border backdrop-blur-xl px-5 flex items-center justify-between transition-all duration-300 ${scrolled ? "bg-gray-950/95 border-gray-700/60 py-1.5 shadow-lg" : "bg-gray-950/80 border-gray-800/80 py-2.5 shadow-2xl"}`}
+        style={{
+          backgroundImage: "radial-gradient(circle 120px at var(--mx,50%) var(--my,50%), rgba(16,229,160,0.15), transparent 70%)",
+        }}
+      >
         <Link to="/" className="flex items-center gap-2.5 group">
           <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
             <Terminal className="w-4 h-4" />
