@@ -113,3 +113,19 @@ npm run dev
 npm run build
 ```
 Open [http://localhost:5173](http://localhost:5173) in your browser to verify "Backend connected".
+## Phase 2 rules
+- Phase 2 = database + auth only. Do not touch the landing page
+  (client/src/components/landing, pages/LandingPage.tsx, CursorGlow).
+- Never use Bash echo to print status; write status in the reply.
+- Ask me BEFORE destructive commands: prisma migrate reset,
+  docker compose down -v, DROP/TRUNCATE on any non-test database,
+  deleting files.
+- Follow the CURRENT official docs for Prisma and for every library
+  you install. Do not guess syntax from memory.
+- Security: never log passwords, tokens or cookies. Never return
+  passwordHash in any response. Real secrets only in .env
+  (gitignored); placeholders in .env.example.
+- Any query returning user data must filter by the logged-in user
+  inside the query itself. Someone else's resource returns 404,
+  never 403.
+- Explain changes in simple Hinglish. PowerShell-compatible commands.

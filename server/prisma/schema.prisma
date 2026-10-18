@@ -1,0 +1,10 @@
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+generator client { provider = "prisma-client-js" }
+enum BugStatus { submitted investigating investigated test_generated reproduced unverified failed }
+enum TestStatus { queued running passed failed timed_out infra_error }
+enum ProjectSourceType { zip sample github }
+model User { id String @id @default(uuid()) email String @unique passwordHash String name String createdAt DateTime @default(now()) updatedAt DateTime @updatedAt projects Project[] bugReports BugReport[] sessions Session[] }
+model Session { id String @id @default(uuid()) userId String user User @relation(fields:[userId],references:[id],onDelete:Cascade) tokenHash String @unique expiresAt DateTime createdAt DateTime @default(now()) lastUsedAt DateTime? @@index([userId,expiresAt]) }
+model Project { id String @id @default(uuid()) ownerId String owner User @relation(fields:[ownerId],references:[id],onDelete:Cascade) name String repositoryUrl String? defaultBranch String @default("main") isDemo Boolean @default(false) createdAt DateTime @default(now()) updatedAt DateTime @updatedAt bugReports BugReport[] @@index([ownerId,createdAt]) }
+model BugReport { id String @id @default(uuid()) projectId String project Project @relation(fields:[projectId],references:[id],onDelete:Cascade) title String description String expectedBehavior String? actualBehavior String? affectedEndpoint String? stackTrace String? @db.Text logs String? @db.Text status BugStatus @default(submitted) isDemo Boolean @default(false) createdAt DateTime @default(now()) updatedAt DateTime @updatedAt testRuns TestRun[] @@index([projectId,createdAt]) @@index([projectId,status]) }
+model TestRun { id String @id @default(uuid()) bugReportId String bugReport BugReport @relation(fields:[bugReportId],references:[id],onDelete:Cascade) status TestStatus exitCode Int? durationMs Int? generatedTestVersion String? commitSha String? outputRef String? isDemo Boolean @default(false) createdAt DateTime @default(now()) @@index([bugReportId,createdAt]) }
