@@ -1,21 +1,41 @@
 import { Routes, Route } from "react-router-dom";
 import { LandingPage } from "./pages/LandingPage";
+import { AppLayout } from "./components/layout/AppLayout";
+import { DashboardPage } from "./pages/DashboardPage";
+import { ProjectsPage } from "./pages/ProjectsPage";
+import { CreateProjectPage } from "./pages/CreateProjectPage";
+import { BugReportsPage } from "./pages/BugReportsPage";
+import { CreateBugReportPage } from "./pages/CreateBugReportPage";
+import { BugReportDetailPage } from "./pages/BugReportDetailPage";
+import { InvestigationPage } from "./pages/InvestigationPage";
+import { TestRunsPage } from "./pages/TestRunsPage";
+import { TestRunDetailPage } from "./pages/TestRunDetailPage";
+import { SettingsPage } from "./pages/SettingsPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 
 function App() {
   return (
     <Routes>
+      {/* Public Landing Page */}
       <Route path="/" element={<LandingPage />} />
-      <Route
-        path="/app/*"
-        element={
-          <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-6 text-center">
-            <h2 className="text-2xl font-bold text-white mb-2">App Shell Placeholder</h2>
-            <p className="text-sm text-gray-400 max-w-md">
-              The full authenticated dashboard experience connects here in Sub-step 1C.
-            </p>
-          </div>
-        }
-      />
+
+      {/* Developer Console Layout */}
+      <Route path="/app" element={<AppLayout />}>
+        <Route index element={<DashboardPage />} />
+        <Route path="projects" element={<ProjectsPage />} />
+        <Route path="projects/new" element={<CreateProjectPage />} />
+        <Route path="bug-reports" element={<BugReportsPage />} />
+        <Route path="bug-reports/new" element={<CreateBugReportPage />} />
+        <Route path="bug-reports/:id" element={<BugReportDetailPage />} />
+        <Route path="bug-reports/:id/investigation" element={<InvestigationPage />} />
+        <Route path="test-runs" element={<TestRunsPage />} />
+        <Route path="test-runs/:id" element={<TestRunDetailPage />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
+
+      {/* Global 404 */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

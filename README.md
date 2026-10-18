@@ -14,6 +14,12 @@ ReproForge takes a bug report and your project code, analyzes the bug with an LL
 - **Job Queue (Phase 7+):** Redis + BullMQ
 - **AI / LLM (Phase 6+):** OpenAI API
 - **Execution Sandbox (Phase 8+):** Docker containers
+- For UI/UX work, use the ui-ux-pro-max skill as an ADVISOR and
+  checker. My explicit design decisions (docs/DESIGN.md and the
+  current prompt) always win. If the skill's advice conflicts with
+  them, tell me the conflict instead of silently changing the design.
+- On Windows use `python`, not `python3`, if python3 is not found.
+  Never install software yourself; ask me.
 
 ---
 
