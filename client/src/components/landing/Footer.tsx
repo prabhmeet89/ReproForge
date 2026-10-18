@@ -3,7 +3,7 @@ import { GithubIcon } from "../ui/GithubIcon";
 
 export function Footer() {
   return (
-    <footer className="border-t border-gray-900 bg-gray-950/60 py-12 px-6">
+    <footer className="border-t border-gray-900 bg-transparent py-12 px-6">
       <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-gray-500 font-mono">
         <div className="flex items-center gap-2 text-gray-400">
           <Terminal className="w-4 h-4 text-emerald-400" />

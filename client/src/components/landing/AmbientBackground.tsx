@@ -17,8 +17,8 @@ export function AmbientBackground() {
       if (!firstMove) setFirstMove(true);
       //setVisible;
     };
-    const onLeave = () => //setVisible;
-    const onEnter = () => { if (firstMove) //setVisible; };
+    const onLeave = () => {};
+    const onEnter = () => { if (firstMove) {} };
     window.addEventListener("pointermove", onMove, { passive: true });
     window.addEventListener("mouseleave", onLeave, { passive: true });
     window.addEventListener("mouseenter", onEnter, { passive: true });
