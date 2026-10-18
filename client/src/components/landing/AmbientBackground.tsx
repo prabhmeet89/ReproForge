@@ -6,7 +6,7 @@ export function AmbientBackground() {
   const mx = useMotionValue(1200);
   const my = useMotionValue(600);
   const [firstMove, setFirstMove] = useState(false);
-  const [visible, setVisible] = useState(1);
+  // visible removed
 
   useEffect(() => {
     if (shouldReduce) return;
@@ -15,10 +15,10 @@ export function AmbientBackground() {
       mx.set(e.clientX);
       my.set(e.clientY);
       if (!firstMove) setFirstMove(true);
-      setVisible(1);
+      //setVisible;
     };
-    const onLeave = () => setVisible(0);
-    const onEnter = () => { if (firstMove) setVisible(1); };
+    const onLeave = () => //setVisible;
+    const onEnter = () => { if (firstMove) //setVisible; };
     window.addEventListener("pointermove", onMove, { passive: true });
     window.addEventListener("mouseleave", onLeave, { passive: true });
     window.addEventListener("mouseenter", onEnter, { passive: true });
@@ -29,8 +29,8 @@ export function AmbientBackground() {
     };
   }, [shouldReduce, mx, my, firstMove]);
 
-  const trackX = mx.get();
-  const trackY = my.get();
+  // trackX removed
+  // trackY removed
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden bg-[#05070D]" style={{ zIndex: 10 }}>
@@ -47,22 +47,6 @@ export function AmbientBackground() {
         maskImage: "radial-gradient(ellipse 78% 78% at center, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 85%)",
         WebkitMaskImage: "radial-gradient(ellipse 78% 78% at center, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 85%)",
       }} />
-      <div
-        className="fixed pointer-events-none aria-hidden"
-        style={{
-          position: "fixed",
-          left: 0, top: 0,
-          width: "var(--glow-size, 380px)",
-          height: "var(--glow-size, 380px)",
-          marginLeft: "calc(var(--glow-size, 380px) / -2)",
-          marginTop: "calc(var(--glow-size, 380px) / -2)",
-          background: "radial-gradient(closest-side, rgba(16,229,160,0.26) 0%, rgba(16,229,160,0.19) 18%, rgba(16,229,160,0.11) 40%, rgba(16,229,160,0.045) 65%, rgba(16,229,160,0.012) 85%, rgba(16,229,160,0) 100%)",
-          transform: `translate3d(${firstMove ? (mx.get() || trackX) : 1200}px, ${firstMove ? (my.get() || trackY) : 600}px, 0)`,
-          opacity: visible,
-          willChange: "transform",
-          zIndex: 15,
-        }}
-      />
       <div className="absolute bottom-[25%] right-[25%] w-[520px] h-[400px] rounded-full" style={{ background: "radial-gradient(circle, var(--glow-violet) 0%, transparent 70%)", opacity: "var(--glow-violet-opacity)", filter: "blur(95px)" }} />
     </div>
   );
