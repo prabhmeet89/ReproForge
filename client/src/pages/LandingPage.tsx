@@ -4,14 +4,12 @@ import { AmbientBackground } from "../components/landing/AmbientBackground";
 import { ProgressLine } from "../components/landing/ProgressLine";
 import { Hero } from "../components/landing/Hero";
 import { Footer } from "../components/landing/Footer";
-import { CursorGlow } from "../components/landing/CursorGlow";
 
 export function LandingPage() {
   return (
     <MotionConfig reducedMotion="user">
     <div className="min-h-screen bg-[#05070D] text-gray-100 bg-grid-pattern relative selection:bg-emerald-500/30 selection:text-emerald-200">
       <ProgressLine />
-      <CursorGlow />
       <AmbientBackground />
       <Navbar />
       <main>
