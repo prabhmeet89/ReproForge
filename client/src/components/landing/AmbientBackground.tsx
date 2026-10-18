@@ -56,7 +56,7 @@ export function AmbientBackground() {
 
       {/* Top-right glow: teal / emerald, heavy blur, slow drift */}
       <motion.div
-        className="absolute top-1/4 left-1/4 w-[720px] h-[520px] rounded-full"
+        className="absolute top-[10%] left-[15%] w-[900px] h-[700px] rounded-full"
         style={{
           background: "radial-gradient(circle, var(--glow-teal) 0%, transparent 70%)",
           opacity: "var(--glow-teal-opacity)",

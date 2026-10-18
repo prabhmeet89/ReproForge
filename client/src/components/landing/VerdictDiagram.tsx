@@ -20,7 +20,7 @@ const NODES: NodeDetail[] = [
     tag: "INPUT",
     desc: "Ingests issue text, call stack, and repository source files",
     icon: Bug,
-    color: "#f59e0b", // Amber
+    color: "#06b6d4", // Cyan (reserved amber for unverified)
     x: 80,
     y: 120,
   },
@@ -65,7 +65,7 @@ export function VerdictDiagram() {
   const centerY = 240;
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto p-4 rounded-3xl border border-gray-800 bg-gray-950/80 backdrop-blur-xl shadow-2xl shadow-emerald-500/5">
+    <div className="relative w-full max-w-2xl mx-auto p-3 rounded-2xl border border-gray-800 bg-gray-950/80 backdrop-blur-xl shadow-2xl shadow-emerald-500/5">
       {/* Top terminal-style caption */}
       <div className="flex items-center justify-between border-b border-gray-800/80 pb-3 mb-2 px-2 text-xs font-mono text-gray-500">
         <div className="flex items-center gap-2">
@@ -199,7 +199,7 @@ export function VerdictDiagram() {
 
                 {/* Node background circle */}
                 <circle
-                  r="28"
+                  r="34"
                   fill="#0b0f19"
                   stroke={isHovered ? node.color : "#1f2937"}
                   strokeWidth="2"
@@ -213,16 +213,16 @@ export function VerdictDiagram() {
                     className="w-full h-full flex items-center justify-center transition-colors"
                     style={{ color: node.color }}
                   >
-                    <node.icon className="w-5 h-5" />
+                    <node.icon className="w-6 h-6" />
                   </div>
                 </foreignObject>
 
                 {/* Node Label Text */}
                 <text
                   textAnchor="middle"
-                  y="46"
+                  y="50"
                   fill={isHovered ? "#ffffff" : "#9ca3af"}
-                  fontSize="11"
+                  fontSize="12"
                   fontWeight="600"
                   fontFamily="Space Grotesk, sans-serif"
                   className="transition-colors"

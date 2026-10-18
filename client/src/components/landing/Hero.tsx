@@ -18,7 +18,7 @@ export function Hero() {
               <span className="font-mono text-[11px] text-emerald-300">Phase 1 Preview</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-[3.3rem] font-display font-extrabold text-white tracking-tight leading-[1.08]">
+            <h1 className="text-3xl sm:text-4xl lg:text-[2.9rem] font-display font-extrabold text-white tracking-tight leading-[1.08]">
               Turn vague bug reports into{" "}
               <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
                 executable test proofs.
@@ -44,7 +44,7 @@ export function Hero() {
               </a>
             </div>
 
-            <div className="pt-2 flex flex-wrap items-center gap-5 text-xs font-mono text-gray-500">
+            <div className="flex flex-wrap items-center gap-3 pt-1 text-xs font-mono text-gray-500">
               <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-emerald-500" /><span>Zero host pollution</span></div>
               <span className="text-gray-700 hidden sm:inline">•</span>
               <div className="flex items-center gap-2"><Terminal className="w-3.5 h-3.5 text-gray-400" /><span>Sandbox ready</span></div>
