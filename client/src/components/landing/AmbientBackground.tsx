@@ -1,4 +1,5 @@
-import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, useMotionValue, useSpring, useReducedMotion } from "framer-motion";
 
 /**
  * AmbientBackground — one reusable layer behind all landing sections.
@@ -16,6 +17,25 @@ import { motion, useReducedMotion } from "framer-motion";
  */
 export function AmbientBackground() {
   const shouldReduce = useReducedMotion();
+  const mx = useMotionValue(window.innerWidth / 2);
+  const my = useMotionValue(window.innerHeight / 2);
+  const springX = useSpring(mx, { stiffness: 999, damping: 60, mass: 0.3, restDelta: 0.001 });
+  const springY = useSpring(my, { stiffness: 999, damping: 60, mass: 0.3, restDelta: 0.001 });
+  const [firstMove, setFirstMove] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (shouldReduce) return;
+    const onMove = (e: MouseEvent) => {
+      mx.set(e.clientX);
+      my.set(e.clientY);
+      if (!firstMove) setFirstMove(true);
+    };
+    const onLeave = () => { mx.set(window.innerWidth / 2); my.set(window.innerHeight / 2); };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("mouseleave", onLeave, { passive: true });
+    return () => { window.removeEventListener("pointermove", onMove); window.removeEventListener("mouseleave", onLeave); };
+  }, [shouldReduce, mx, my]);
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden bg-gray-950">
       {/* Hidden SVG def holding the hex pattern once per render */}
@@ -54,17 +74,25 @@ export function AmbientBackground() {
         }}
       />
 
-      {/* Top-right glow: teal / emerald, heavy blur, slow drift */}
+      {/* Cursor-following teal glow (same element, moved from decorative loop) */}
       <motion.div
-        className="absolute top-[10%] left-[15%] w-[900px] h-[700px] rounded-full"
+        ref={containerRef}
+        className="fixed pointer-events-none aria-hidden rounded-full"
         style={{
-          background: "radial-gradient(circle, var(--glow-teal) 0%, transparent 70%)",
-          opacity: "var(--glow-teal-opacity)",
-          filter: "blur(110px)",
+          width: 380,
+          height: 380,
+          top: "50%",
+          left: "50%",
+          marginTop: -190,
+          marginLeft: -190,
+          background: "radial-gradient(circle at 50% 50%, rgba(16,229,160,0.22) 0%, rgba(34,211,238,0.10) 60%, transparent 100%)",
+          x: shouldReduce ? 0 : springX,
+          y: shouldReduce ? 0 : springY,
+          translateZ: 0,
+          willChange: "transform",
+          opacity: firstMove ? 1 : 0,
+          transition: "opacity 0.25s ease",
         }}
-        initial={{ x: 0, y: 0 }}
-        animate={shouldReduce ? { x: 0, y: 0 } : { x: [-50, 50, -50, 50], y: [-40, 40, -40, 40] }}
-        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
       />
 
       {/* Bottom-left glow: violet, slower drift, lighter blur */}
