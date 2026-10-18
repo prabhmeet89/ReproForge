@@ -13,6 +13,8 @@
 }
 
 :root {
+  --glow-size: clamp(280px, 42vw, 560px);
+  --glow-rgb: 16, 229, 160;
   color-scheme: dark;
   /* Landing-Ambient token set — swap palette in one place */
   --glow-teal: #10b981;        /* emerald-500 — main glow */
