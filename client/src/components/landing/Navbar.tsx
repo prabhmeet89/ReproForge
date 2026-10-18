@@ -1,12 +1,20 @@
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Terminal, ArrowUpRight } from "lucide-react";
 import { Button } from "../ui/Button";
 import { GithubIcon } from "../ui/GithubIcon";
 
 export function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <header className="fixed top-4 inset-x-0 z-50 flex justify-center px-4">
-      <nav className="w-full max-w-5xl rounded-full border border-gray-800/80 bg-gray-950/80 backdrop-blur-xl px-5 py-2.5 shadow-2xl flex items-center justify-between">
+    <header className={`fixed inset-x-0 z-50 flex justify-center px-4 transition-all duration-300 ${scrolled ? "top-2" : "top-4"}`}>
+      <nav className={`w-full max-w-5xl rounded-full border backdrop-blur-xl px-5 flex items-center justify-between transition-all duration-300 ${scrolled ? "bg-gray-950/95 border-gray-700/60 py-1.5 shadow-lg" : "bg-gray-950/80 border-gray-800/80 py-2.5 shadow-2xl"}`}>
         {/* Brand Logo */}
         <Link to="/" className="flex items-center gap-2.5 group">
           <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
