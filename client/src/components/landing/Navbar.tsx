@@ -24,7 +24,6 @@ export function Navbar() {
         }}
         className={`w-full max-w-5xl rounded-full border backdrop-blur-xl px-5 flex items-center justify-between transition-all duration-300 ${scrolled ? "bg-gray-950/95 border-gray-700/60 py-1.5 shadow-lg" : "bg-gray-950/80 border-gray-800/80 py-2.5 shadow-2xl"}`}
         style={{
-          backgroundImage: "radial-gradient(circle 120px at var(--mx,50%) var(--my,50%), rgba(16,229,160,0.15), transparent 70%)",
         }}
       >
         <Link to="/" className="flex items-center gap-2.5 group">
