@@ -26,23 +26,25 @@
 - [x] Push to GitHub
 
 ## Phase 1 — UI Shell & Static Pages
-- [ ] Layout component with sidebar navigation
-- [ ] Dashboard page with mock data
-- [ ] Projects list page
-- [ ] Bug submission form (UI only)
-- [ ] Investigation results page (mock)
-- [ ] Test execution results page (mock)
-- [ ] Responsive design
-- [ ] Dark mode support
-- [ ] Loading states and transitions
+- [x] Layout component with sidebar navigation (`AppLayout`, `Sidebar`, `Topbar`)
+- [x] Dashboard page with mock data
+- [x] Projects list page
+- [x] Bug submission form (UI only)
+- [x] Investigation results page (mock)
+- [x] Test execution results page (mock)
+- [x] Responsive design
+- [ ] Dark mode support — the app is dark-only today (fixed `#05070D` body background, no light theme or theme toggle yet)
+- [x] Loading states and transitions (`Skeleton`, `Button isLoading`, TanStack Query states)
 
 ## Phase 2 — Database & Prisma Setup
-- [ ] Start PostgreSQL via Docker Compose
-- [ ] Install and configure Prisma
-- [ ] Create Prisma schema (User, Project, BugReport, TestRun)
-- [ ] Run initial migration
-- [ ] Create seed script with sample data
-- [ ] Test database connection
+- [x] Start PostgreSQL via Docker Compose — **superseded**: local dev now uses SQLite (`provider = "sqlite"`), no Docker needed. `docker-compose.yml` remains as a placeholder for later phases.
+- [x] Install and configure Prisma (Prisma 5.22.0, `prisma-client-js` generator)
+- [x] Create Prisma schema (User, Session, Project, BugReport, TestRun)
+- [x] Run initial migration (`20261020000000_init`) plus `20261020111054_add_testrun_output` for `TestRun.stdout` / `TestRun.stderr`
+- [x] Create seed script with sample data (`npm run db:seed`, add `-- --force` to wipe and reseed)
+- [x] Test database connection
+- [x] Wire the repositories to Prisma — `projects`, `bug-reports` and `test-runs` repositories now read/write real rows instead of in-memory arrays
+- [x] Isolate the test database — tests run against `prisma/test.db`, never the dev database
 
 ## Phase 3 — Authentication
 - [ ] Install bcrypt and jsonwebtoken

@@ -1,5 +1,5 @@
-// TEMPORARY in-memory store, replaced by Prisma in Phase 2.
-import crypto from "crypto";
+import { db, toIsoString } from "../../config/db";
+import { usersRepository } from "../users/users.repository";
 import { CreateBugReportInput, BugReportStatus } from "./bug-reports.schema";
 
 export interface BugReport {
@@ -17,8 +17,6 @@ export interface BugReport {
   isDemo?: boolean;
 }
 
-const bugReports: BugReport[] = [];
-
 export interface BugReportFindAllOptions {
   projectId?: string;
   status?: BugReportStatus;
@@ -28,70 +26,110 @@ export interface BugReportFindAllOptions {
 }
 
 export const bugReportsRepository = {
-  async findAll(options?: BugReportFindAllOptions): Promise<{ items: BugReport[]; total: number }> {
-    let list = [...bugReports];
-
-    if (options?.projectId) {
-      list = list.filter((b) => b.projectId === options.projectId);
-    }
-
-    if (options?.status) {
-      list = list.filter((b) => b.status === options.status);
-    }
-
-    if (options?.sort === "oldest") {
-      list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-    } else {
-      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    }
-
-    const total = list.length;
+  async findAll(
+    options?: BugReportFindAllOptions
+  ): Promise<{ items: BugReport[]; total: number }> {
     const page = options?.page || 1;
     const limit = options?.limit || 10;
-    const startIndex = (page - 1) * limit;
-    const items = list.slice(startIndex, startIndex + limit);
 
-    return { items, total };
+    const where = {
+      ...(options?.projectId ? { projectId: options.projectId } : {}),
+      ...(options?.status ? { status: options.status } : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      db.bugReport.findMany({
+        where,
+        orderBy: {
+          createdAt: options?.sort === "oldest" ? "asc" : "desc",
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      db.bugReport.count({ where }),
+    ]);
+
+    return { items: rows.map(mapBugReport), total };
   },
 
   async findById(id: string): Promise<BugReport | null> {
-    const item = bugReports.find((b) => b.id === id);
-    return item ? { ...item } : null;
+    const row = await db.bugReport.findUnique({ where: { id } });
+    return row ? mapBugReport(row) : null;
   },
 
-  async create(data: CreateBugReportInput & { status?: BugReportStatus; isDemo?: boolean }): Promise<BugReport> {
-    const newBugReport: BugReport = {
-      id: crypto.randomUUID(),
-      projectId: data.projectId,
-      title: data.title,
-      description: data.description,
-      expectedBehavior: data.expectedBehavior,
-      actualBehavior: data.actualBehavior,
-      affectedEndpoint: data.affectedEndpoint,
-      stackTrace: data.stackTrace,
-      logs: data.logs,
-      status: data.status || "submitted",
-      createdAt: new Date().toISOString(),
-      isDemo: data.isDemo || false,
-    };
+  async create(
+    data: CreateBugReportInput & { status?: BugReportStatus; isDemo?: boolean }
+  ): Promise<BugReport> {
+    const ownerId = await usersRepository.getOrCreateDemoUserId();
 
-    bugReports.unshift(newBugReport);
-    return { ...newBugReport };
+    const row = await db.bugReport.create({
+      data: {
+        ownerId,
+        projectId: data.projectId,
+        title: data.title,
+        description: data.description,
+        expectedBehavior: data.expectedBehavior,
+        actualBehavior: data.actualBehavior,
+        affectedEndpoint: data.affectedEndpoint ?? null,
+        stackTrace: data.stackTrace ?? null,
+        logs: data.logs ?? null,
+        status: data.status || "submitted",
+        isDemo: data.isDemo || false,
+      },
+    });
+
+    return mapBugReport(row);
   },
 
   async count(): Promise<number> {
-    return bugReports.length;
+    return db.bugReport.count();
   },
 
   async countByStatus(): Promise<Record<string, number>> {
+    const rows = await db.bugReport.groupBy({
+      by: ["status"],
+      _count: { _all: true },
+    });
+
     const counts: Record<string, number> = {};
-    for (const b of bugReports) {
-      counts[b.status] = (counts[b.status] || 0) + 1;
+    for (const row of rows) {
+      counts[row.status] = row._count._all;
     }
     return counts;
   },
 
   async clear(): Promise<void> {
-    bugReports.length = 0;
+    // Test runs cascade from bug reports.
+    await db.bugReport.deleteMany();
   },
 };
+
+function mapBugReport(row: {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string;
+  expectedBehavior: string | null;
+  actualBehavior: string | null;
+  affectedEndpoint: string | null;
+  stackTrace: string | null;
+  logs: string | null;
+  status: string;
+  createdAt: Date;
+  isDemo: boolean;
+}): BugReport {
+  return {
+    id: row.id,
+    projectId: row.projectId,
+    title: row.title,
+    description: row.description,
+    expectedBehavior: row.expectedBehavior ?? "",
+    actualBehavior: row.actualBehavior ?? "",
+    affectedEndpoint: row.affectedEndpoint ?? undefined,
+    stackTrace: row.stackTrace ?? undefined,
+    logs: row.logs ?? undefined,
+    status: row.status as BugReportStatus,
+    createdAt: toIsoString(row.createdAt),
+    isDemo: row.isDemo,
+  };
+}

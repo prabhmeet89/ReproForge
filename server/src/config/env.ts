@@ -18,11 +18,18 @@ const envSchema = z.object({
 
   CLIENT_URL: z.string().url().default("http://localhost:5173"),
 
+  // Prisma datasource URL — a SQLite file path for local development.
+  DATABASE_URL: z
+    .string()
+    .min(1, "DATABASE_URL is required")
+    .default("file:./dev.db"),
+
   SEED_DEMO_DATA: z
     .string()
     .optional()
     .default("false")
     .transform((val) => val === "true"),
+
 });
 
 // Validate karo — agar koi variable missing ya galat hai toh clear error message dega

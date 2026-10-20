@@ -1,38 +1,60 @@
 # Database Entities — ReproForge
 
-> **Note:** This is documentation only. Prisma schema will be created in Phase 2.
+> **Note:** This document mirrors the live Prisma schema at
+> `server/prisma/schema.prisma`. If the two ever disagree, the schema file is
+> the source of truth.
 
 ---
 
 ## Entity: User
 
-| Field        | Type      | Notes                              |
-| ------------ | --------- | ---------------------------------- |
-| id           | UUID      | Primary key, auto-generated        |
-| email        | String    | Unique, used for login             |
-| passwordHash | String    | Bcrypt hashed password             |
-| name         | String    | Display name                       |
-| createdAt    | DateTime  | Auto-set on creation               |
-| updatedAt    | DateTime  | Auto-updated on modification       |
+| Field        | Type      | Notes                                                        |
+| ------------ | --------- | ------------------------------------------------------------ |
+| id           | UUID      | Primary key, auto-generated                                  |
+| email        | String    | Unique, used for login                                       |
+| passwordHash | String    | Bcrypt hashed password                                       |
+| name         | String    | Display name                                                 |
+| createdAt    | DateTime  | Auto-set on creation                                         |
+| updatedAt    | DateTime  | Auto-updated on modification                                 |
 
 **Relationships:**
 - User → has many **Projects**
 - User → has many **BugReports**
+- User → has many **Sessions**
+
+> Until authentication lands (Phase 3) a single demo user owns every row.
+> It is created on demand by `usersRepository.getOrCreateDemoUserId()`.
+
+---
+
+## Entity: Session
+
+| Field       | Type      | Notes                                              |
+| ----------- | --------- | -------------------------------------------------- |
+| id          | UUID      | Primary key, auto-generated                        |
+| userId      | UUID      | Foreign key → User.id                              |
+| tokenHash   | String    | Unique — only the hash of the session token is stored |
+| expiresAt   | DateTime  | Session expiry                                     |
+| createdAt   | DateTime  | Auto-set on creation                               |
+| lastUsedAt  | DateTime? | Updated on each request that uses the session     |
+
+**Relationships:**
+- Session → belongs to one **User**
 
 ---
 
 ## Entity: Project
 
-| Field       | Type      | Notes                                              |
-| ----------- | --------- | -------------------------------------------------- |
-| id          | UUID      | Primary key, auto-generated                        |
-| name        | String    | Project name (e.g., "my-express-app")              |
-| description | String?   | Optional description                               |
-| sourceType  | Enum      | `zip` \| `sample` \| `github` (github is for later) |
-| sourcePath  | String    | Path to stored project files on server             |
-| userId      | UUID      | Foreign key → User.id (owner)                      |
-| createdAt   | DateTime  | Auto-set on creation                               |
-| updatedAt   | DateTime  | Auto-updated on modification                       |
+| Field          | Type      | Notes                                                        |
+| -------------- | --------- | ------------------------------------------------------------ |
+| id             | UUID      | Primary key, auto-generated                                  |
+| ownerId        | UUID      | Foreign key → User.id (owner)                                |
+| name           | String    | Project name (e.g., "my-express-app")                        |
+| repositoryUrl  | String?   | Optional source repository URL                               |
+| defaultBranch  | String    | Branch name, defaults to `main`                              |
+| isDemo         | Boolean   | Marks seeded demo rows, defaults to `false`                  |
+| createdAt      | DateTime  | Auto-set on creation                                         |
+| updatedAt      | DateTime  | Auto-updated on modification                                 |
 
 **Relationships:**
 - Project → belongs to one **User**
@@ -42,18 +64,25 @@
 
 ## Entity: BugReport
 
-| Field            | Type      | Notes                                                  |
-| ---------------- | --------- | ------------------------------------------------------ |
-| id               | UUID      | Primary key, auto-generated                            |
-| title            | String    | Short summary (e.g., "Login route returns 500")        |
-| description      | String    | Detailed bug description (free text)                   |
-| severity         | Enum      | `low` \| `medium` \| `high` \| `critical`              |
-| stepsToReproduce | String?   | Optional manual repro steps from the user              |
-| status           | Enum      | `pending` \| `investigating` \| `reproduced` \| `not_reproduced` \| `error` |
-| projectId        | UUID      | Foreign key → Project.id                               |
-| userId           | UUID      | Foreign key → User.id (reporter)                       |
-| createdAt        | DateTime  | Auto-set on creation                                   |
-| updatedAt        | DateTime  | Auto-updated on modification                           |
+| Field             | Type      | Notes                                                          |
+| ----------------- | --------- | -------------------------------------------------------------- |
+| id                | UUID      | Primary key, auto-generated                                    |
+| projectId         | UUID      | Foreign key → Project.id                                       |
+| ownerId           | UUID      | Foreign key → User.id (reporter)                               |
+| title             | String    | Short summary (e.g., "Login route returns 500")                |
+| description       | String    | Detailed bug description (free text)                           |
+| expectedBehavior  | String?   | What the user expected to happen                               |
+| actualBehavior    | String?   | What actually happened                                        |
+| affectedEndpoint  | String?   | Endpoint the bug was observed on                               |
+| stackTrace        | String?   | Captured stack trace                                           |
+| logs              | String?   | Captured application logs                                      |
+| status            | String    | `submitted` \| `investigating` \| `investigated` \| `test_generated` \| `reproduced` \| `unverified` \| `failed` |
+| isDemo            | Boolean   | Marks seeded demo rows, defaults to `false`                    |
+| createdAt         | DateTime  | Auto-set on creation                                           |
+| updatedAt         | DateTime  | Auto-updated on modification                                   |
+
+> SQLite has no native enum type, so `status` is stored as a `String`. The
+> allowed values are enforced by the Zod schema (`bugReportStatusEnum`).
 
 **Relationships:**
 - BugReport → belongs to one **Project**
@@ -64,18 +93,20 @@
 
 ## Entity: TestRun
 
-| Field           | Type      | Notes                                                    |
-| --------------- | --------- | -------------------------------------------------------- |
-| id              | UUID      | Primary key, auto-generated                              |
-| bugReportId     | UUID      | Foreign key → BugReport.id                               |
-| aiAnalysis      | String?   | AI's analysis of the bug (markdown text)                 |
-| generatedCode   | String?   | AI-generated test/reproduction code                      |
-| executionStatus | Enum      | `queued` \| `running` \| `completed` \| `failed` \| `timeout` |
-| stdout          | String?   | Standard output from Docker sandbox                      |
-| stderr          | String?   | Standard error from Docker sandbox                       |
-| exitCode        | Int?      | Process exit code (0 = success, non-zero = failure)      |
-| durationMs      | Int?      | Execution time in milliseconds                           |
-| createdAt       | DateTime  | Auto-set on creation                                     |
+| Field                  | Type      | Notes                                                       |
+| ---------------------- | --------- | ----------------------------------------------------------- |
+| id                     | UUID      | Primary key, auto-generated                                 |
+| bugReportId            | UUID      | Foreign key → BugReport.id                                  |
+| status                 | String    | `queued` \| `running` \| `passed` \| `failed` \| `error`    |
+| exitCode               | Int?      | Process exit code (0 = success, non-zero = failure)         |
+| durationMs             | Int?      | Execution time in milliseconds                              |
+| generatedTestVersion   | String?   | Version of the generated reproduction test                  |
+| commitSha              | String?   | Commit the test was generated against                       |
+| outputRef              | String?   | Reference to stored output artefacts                        |
+| stdout                 | String?   | Standard output from the sandbox run                         |
+| stderr                 | String?   | Standard error from the sandbox run                          |
+| isDemo                 | Boolean   | Marks seeded demo rows, defaults to `false`                 |
+| createdAt              | DateTime  | Auto-set on creation                                        |
 
 **Relationships:**
 - TestRun → belongs to one **BugReport**
@@ -87,9 +118,11 @@
 ```
 User (1) ──────< (many) Project
 User (1) ──────< (many) BugReport
+User (1) ──────< (many) Session
 Project (1) ───< (many) BugReport
 BugReport (1) ─< (many) TestRun
 ```
 
 A User can own multiple Projects. Each Project can have multiple BugReports.
 Each BugReport can have multiple TestRuns (re-runs with different AI outputs).
+All child rows cascade-delete when their parent is deleted.

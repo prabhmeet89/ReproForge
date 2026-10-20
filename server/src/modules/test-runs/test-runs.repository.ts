@@ -1,5 +1,4 @@
-// TEMPORARY in-memory store, replaced by Prisma in Phase 2.
-import crypto from "crypto";
+import { db, toIsoString } from "../../config/db";
 
 export interface TestRun {
   id: string;
@@ -13,8 +12,6 @@ export interface TestRun {
   isDemo?: boolean;
 }
 
-const testRuns: TestRun[] = [];
-
 export interface TestRunFindAllOptions {
   bugReportId?: string;
   page?: number;
@@ -22,50 +19,83 @@ export interface TestRunFindAllOptions {
 }
 
 export const testRunsRepository = {
-  async findAll(options?: TestRunFindAllOptions): Promise<{ items: TestRun[]; total: number }> {
-    let list = [...testRuns];
-
-    if (options?.bugReportId) {
-      list = list.filter((r) => r.bugReportId === options.bugReportId);
-    }
-
-    list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    const total = list.length;
+  async findAll(
+    options?: TestRunFindAllOptions
+  ): Promise<{ items: TestRun[]; total: number }> {
     const page = options?.page || 1;
     const limit = options?.limit || 10;
-    const startIndex = (page - 1) * limit;
-    const items = list.slice(startIndex, startIndex + limit);
 
-    return { items, total };
+    const where = options?.bugReportId
+      ? { bugReportId: options.bugReportId }
+      : {};
+
+    const [rows, total] = await Promise.all([
+      db.testRun.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      db.testRun.count({ where }),
+    ]);
+
+    return { items: rows.map(mapTestRun), total };
   },
 
   async findById(id: string): Promise<TestRun | null> {
-    const item = testRuns.find((r) => r.id === id);
-    return item ? { ...item } : null;
+    const row = await db.testRun.findUnique({ where: { id } });
+    return row ? mapTestRun(row) : null;
   },
 
-  async create(data: Omit<TestRun, "id" | "createdAt"> & { id?: string; createdAt?: string }): Promise<TestRun> {
-    const newRun: TestRun = {
-      id: data.id || crypto.randomUUID(),
-      bugReportId: data.bugReportId,
-      status: data.status,
-      exitCode: data.exitCode,
-      durationMs: data.durationMs,
-      stdout: data.stdout,
-      stderr: data.stderr,
-      createdAt: data.createdAt || new Date().toISOString(),
-      isDemo: data.isDemo || false,
-    };
-    testRuns.unshift(newRun);
-    return { ...newRun };
+  async create(
+    data: Omit<TestRun, "id" | "createdAt"> & { id?: string; createdAt?: string }
+  ): Promise<TestRun> {
+    const row = await db.testRun.create({
+      data: {
+        id: data.id || undefined,
+        bugReportId: data.bugReportId,
+        status: data.status,
+        exitCode: data.exitCode ?? null,
+        durationMs: data.durationMs ?? null,
+        stdout: data.stdout ?? null,
+        stderr: data.stderr ?? null,
+        createdAt: data.createdAt ? new Date(data.createdAt) : undefined,
+        isDemo: data.isDemo || false,
+      },
+    });
+
+    return mapTestRun(row);
   },
 
   async count(): Promise<number> {
-    return testRuns.length;
+    return db.testRun.count();
   },
 
   async clear(): Promise<void> {
-    testRuns.length = 0;
+    await db.testRun.deleteMany();
   },
 };
+
+function mapTestRun(row: {
+  id: string;
+  bugReportId: string;
+  status: string;
+  exitCode: number | null;
+  durationMs: number | null;
+  stdout: string | null;
+  stderr: string | null;
+  createdAt: Date;
+  isDemo: boolean;
+}): TestRun {
+  return {
+    id: row.id,
+    bugReportId: row.bugReportId,
+    status: row.status as TestRun["status"],
+    exitCode: row.exitCode ?? undefined,
+    durationMs: row.durationMs ?? undefined,
+    stdout: row.stdout ?? undefined,
+    stderr: row.stderr ?? undefined,
+    createdAt: toIsoString(row.createdAt),
+    isDemo: row.isDemo,
+  };
+}
