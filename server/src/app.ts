@@ -1,12 +1,15 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import { env } from "./config/env";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler";
 import { requestLogger } from "./middleware/requestLogger";
+import { csrfProtection } from "./middleware/csrf";
 import { sendSuccess } from "./utils/response";
 
 // Route modules
+import authRouter from "./modules/auth/auth.routes";
 import projectsRouter from "./modules/projects/projects.routes";
 import bugReportsRouter from "./modules/bug-reports/bug-reports.routes";
 import testRunsRouter from "./modules/test-runs/test-runs.routes";
@@ -25,6 +28,9 @@ app.use(requestLogger);
 // Bounded JSON body parsing (max 1MB to prevent memory exhaustion)
 app.use(express.json({ limit: "1mb" }));
 
+// Cookie parsing — the session token arrives in a cookie
+app.use(cookieParser());
+
 // CORS — locked to configured client URL
 app.use(
   cors({
@@ -32,6 +38,9 @@ app.use(
     credentials: true,
   })
 );
+
+// CSRF protection for state-changing requests
+app.use(csrfProtection);
 
 // --- API Routes ---
 
@@ -49,6 +58,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 // Domain modules
+app.use("/api/auth", authRouter);
 app.use("/api/projects", projectsRouter);
 app.use("/api/bug-reports", bugReportsRouter);
 app.use("/api/test-runs", testRunsRouter);

@@ -47,11 +47,14 @@
 - [x] Isolate the test database — tests run against `prisma/test.db`, never the dev database
 
 ## Phase 3 — Authentication
-- [ ] Install bcrypt and jsonwebtoken
-- [ ] User registration endpoint (POST /api/auth/register)
-- [ ] User login endpoint (POST /api/auth/login)
-- [ ] JWT middleware for protected routes
-- [ ] GET /api/auth/me endpoint
+- [x] Install argon2 (argon2id) and cookie-parser — **not** bcrypt/jsonwebtoken: the session design is server-side, not JWT
+- [x] User registration endpoint (POST /api/auth/signup)
+- [x] User login endpoint (POST /api/auth/login)
+- [x] Logout endpoint (POST /api/auth/logout) — deletes the session row, idempotent
+- [x] Server-side sessions in the database — the cookie holds a raw token, the database only stores its SHA-256 hash, 7 day TTL
+- [x] requireAuth middleware for protected routes (sets `req.user = { id, email }`)
+- [x] GET /api/auth/me endpoint
+- [x] CSRF protection (Origin check) and rate limiting on login/signup
 - [ ] Frontend login/register pages
 - [ ] Auth context/state management
 - [ ] Protected routes on frontend

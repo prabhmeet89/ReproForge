@@ -10,7 +10,7 @@ process.env.DATABASE_URL = "file:./test.db";
 process.env.NODE_ENV = "test";
 
 /**
- * Clears the domain tables before every test.
+ * Clears the auth tables before every test.
  *
  * Deleting the users cascades to projects → bug reports → test runs, so this
  * gives every test a completely clean database.

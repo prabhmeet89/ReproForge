@@ -29,6 +29,18 @@ export class AppError extends Error {
     return new AppError(message, 422, errors);
   }
 
+  static conflict(message: string = "Resource already exists", errors?: FieldError[]): AppError {
+    return new AppError(message, 409, errors);
+  }
+
+  static unauthorized(message: string = "Authentication required"): AppError {
+    return new AppError(message, 401);
+  }
+
+  static forbidden(message: string = "Access denied", errors?: FieldError[]): AppError {
+    return new AppError(message, 403, errors);
+  }
+
   static internal(message: string = "Internal server error"): AppError {
     return new AppError(message, 500);
   }

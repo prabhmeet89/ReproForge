@@ -30,6 +30,30 @@ const envSchema = z.object({
     .default("false")
     .transform((val) => val === "true"),
 
+  // --- Authentication (Step 2B) ---
+
+  // Name of the cookie that carries the session token.
+  SESSION_COOKIE_NAME: z.string().min(1).default("reproforge_session"),
+
+  // How long a session stays valid, in days.
+  SESSION_TTL_DAYS: z
+    .string()
+    .default("7")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+
+  // Rate limiting for the login/signup endpoints.
+  AUTH_RATE_LIMIT_MAX: z
+    .string()
+    .default("10")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+
+  AUTH_RATE_LIMIT_WINDOW_MINUTES: z
+    .string()
+    .default("15")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
 });
 
 // Validate karo — agar koi variable missing ya galat hai toh clear error message dega
