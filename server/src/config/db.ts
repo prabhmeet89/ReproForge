@@ -5,10 +5,18 @@ import dotenv from "dotenv";
 // when it is imported without the rest of the config layer.
 dotenv.config();
 
-const g = globalThis as any;
-export const db = g.prisma || new PrismaClient();
+/**
+ * The client is cached on globalThis so that hot-reloading in development
+ * does not open a new SQLite connection on every file change.
+ *
+ * The cast keeps the real `PrismaClient` type: without it `db` would be
+ * `any` and the transaction callback types would be lost.
+ */
+const g = globalThis as unknown as { prisma?: PrismaClient };
 
-if (process.env.NODE_ENV != "production") g.prisma = db;
+export const db: PrismaClient = g.prisma ?? new PrismaClient();
+
+if (process.env.NODE_ENV !== "production") g.prisma = db;
 
 process.on("SIGTERM", () => db.$disconnect().then(() => process.exit(0)));
 process.on("SIGINT", () => db.$disconnect().then(() => process.exit(0)));

@@ -41,7 +41,7 @@
 - [x] Install and configure Prisma (Prisma 5.22.0, `prisma-client-js` generator)
 - [x] Create Prisma schema (User, Session, Project, BugReport, TestRun)
 - [x] Run initial migration (`20261020000000_init`) plus `20261020111054_add_testrun_output` for `TestRun.stdout` / `TestRun.stderr`
-- [x] Create seed script with sample data (`npm run db:seed`, add `-- --force` to wipe and reseed)
+- [x] Create seed script with sample data (`npm run db:seed`, add `-- --force` to wipe and reseed) — needs `DEMO_EMAIL` and `DEMO_PASSWORD` in `server/.env`, and refuses to run when `NODE_ENV=production`
 - [x] Test database connection
 - [x] Wire the repositories to Prisma — `projects`, `bug-reports` and `test-runs` repositories now read/write real rows instead of in-memory arrays
 - [x] Isolate the test database — tests run against `prisma/test.db`, never the dev database
@@ -55,6 +55,12 @@
 - [x] requireAuth middleware for protected routes (sets `req.user = { id, email }`)
 - [x] GET /api/auth/me endpoint
 - [x] CSRF protection (Origin check) and rate limiting on login/signup
+- [x] Ownership enforced in the query — every project, bug report and test run read is filtered by the caller's id, so another user's resource is a 404, never a 403
+- [x] `requireAuth` on every domain route (projects, bug-reports, test-runs, dashboard)
+- [x] `ownerId` / `isDemo` rejected from request bodies (strict Zod schemas)
+- [x] Central Prisma error mapping — P2002 → 409, P2025 → 404, P2003 → 422, anything else → 500 with no internals
+- [x] Pagination capped at 50 per page, sort fields from a whitelist
+- [x] Demo seed is a dev-only script (`npm run db:seed`) that refuses to run in production
 - [ ] Frontend login/register pages
 - [ ] Auth context/state management
 - [ ] Protected routes on frontend

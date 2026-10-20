@@ -24,11 +24,12 @@ const envSchema = z.object({
     .min(1, "DATABASE_URL is required")
     .default("file:./dev.db"),
 
-  SEED_DEMO_DATA: z
-    .string()
-    .optional()
-    .default("false")
-    .transform((val) => val === "true"),
+  // --- Demo seed (development only) ---
+  // The account the demo dataset belongs to. The seed refuses to run
+  // without both of these, and refuses to run at all in production.
+  DEMO_EMAIL: z.string().trim().email("DEMO_EMAIL must be a valid email address").optional(),
+
+  DEMO_PASSWORD: z.string().min(10, "DEMO_PASSWORD must be at least 10 characters").optional(),
 
   // --- Authentication (Step 2B) ---
 

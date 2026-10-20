@@ -1,4 +1,5 @@
 import { db, toIsoString } from "../../config/db";
+import { resolvePagination, resolveSort } from "../../utils/pagination";
 
 export interface TestRun {
   id: string;
@@ -13,28 +14,61 @@ export interface TestRun {
 }
 
 export interface TestRunFindAllOptions {
+  /** The owner. Every read is scoped to this user. */
+  userId: string;
   bugReportId?: string;
+  sort?: string;
   page?: number;
   limit?: number;
 }
 
+export interface CreateTestRunData {
+  bugReportId: string;
+  status: TestRun["status"];
+  exitCode?: number;
+  durationMs?: number;
+  stdout?: string;
+  stderr?: string;
+  id?: string;
+  createdAt?: string;
+  isDemo?: boolean;
+}
+
+/**
+ * The orderings a test run list may be sorted by.
+ *
+ * The query string is only ever used as a key into this map.
+ */
+const TEST_RUN_SORT_WHITELIST = {
+  newest: { createdAt: "desc" },
+  oldest: { createdAt: "asc" },
+  status: { status: "asc" },
+} as const;
+
 export const testRunsRepository = {
   async findAll(
-    options?: TestRunFindAllOptions
+    options: TestRunFindAllOptions
   ): Promise<{ items: TestRun[]; total: number }> {
-    const page = options?.page || 1;
-    const limit = options?.limit || 10;
+    const { page, limit, skip, take } = resolvePagination(options.page, options.limit);
 
-    const where = options?.bugReportId
-      ? { bugReportId: options.bugReportId }
-      : {};
+    const where = {
+      // Ownership comes from the bug report's project, two levels up.
+      bugReport: { project: { ownerId: options.userId } },
+      ...(options.bugReportId ? { bugReportId: options.bugReportId } : {}),
+    };
+
+    const orderBy = resolveSort(
+      TEST_RUN_SORT_WHITELIST,
+      options.sort,
+      TEST_RUN_SORT_WHITELIST.newest
+    );
 
     const [rows, total] = await Promise.all([
       db.testRun.findMany({
         where,
-        orderBy: { createdAt: "desc" },
-        skip: (page - 1) * limit,
-        take: limit,
+        orderBy,
+        skip,
+        take,
       }),
       db.testRun.count({ where }),
     ]);
@@ -42,14 +76,20 @@ export const testRunsRepository = {
     return { items: rows.map(mapTestRun), total };
   },
 
-  async findById(id: string): Promise<TestRun | null> {
-    const row = await db.testRun.findUnique({ where: { id } });
+  /**
+   * Finds a test run the user owns.
+   *
+   * The owner filter is part of the lookup, so a run belonging to somebody
+   * else is indistinguishable from one that does not exist.
+   */
+  async findById(id: string, userId: string): Promise<TestRun | null> {
+    const row = await db.testRun.findFirst({
+      where: { id, bugReport: { project: { ownerId: userId } } },
+    });
     return row ? mapTestRun(row) : null;
   },
 
-  async create(
-    data: Omit<TestRun, "id" | "createdAt"> & { id?: string; createdAt?: string }
-  ): Promise<TestRun> {
+  async create(data: CreateTestRunData): Promise<TestRun> {
     const row = await db.testRun.create({
       data: {
         id: data.id || undefined,
@@ -67,8 +107,10 @@ export const testRunsRepository = {
     return mapTestRun(row);
   },
 
-  async count(): Promise<number> {
-    return db.testRun.count();
+  async countByOwner(userId: string): Promise<number> {
+    return db.testRun.count({
+      where: { bugReport: { project: { ownerId: userId } } },
+    });
   },
 
   async clear(): Promise<void> {

@@ -1,6 +1,6 @@
 import { db, toIsoString } from "../../config/db";
-import { usersRepository } from "../users/users.repository";
-import { CreateBugReportInput, BugReportStatus } from "./bug-reports.schema";
+import { resolvePagination, resolveSort } from "../../utils/pagination";
+import { BugReportStatus } from "./bug-reports.schema";
 
 export interface BugReport {
   id: string;
@@ -18,33 +18,67 @@ export interface BugReport {
 }
 
 export interface BugReportFindAllOptions {
+  /** The owner. Every read is scoped to this user. */
+  userId: string;
   projectId?: string;
   status?: BugReportStatus;
-  sort?: "newest" | "oldest";
+  sort?: string;
   page?: number;
   limit?: number;
 }
 
+export interface CreateBugReportData {
+  ownerId: string;
+  projectId: string;
+  title: string;
+  description: string;
+  expectedBehavior: string;
+  actualBehavior: string;
+  affectedEndpoint?: string;
+  stackTrace?: string;
+  logs?: string;
+  status?: BugReportStatus;
+  isDemo?: boolean;
+}
+
+/**
+ * The orderings a bug report list may be sorted by.
+ *
+ * The query string is only ever used as a key into this map.
+ */
+const BUG_REPORT_SORT_WHITELIST = {
+  newest: { createdAt: "desc" },
+  oldest: { createdAt: "asc" },
+  title: { title: "asc" },
+  "title-desc": { title: "desc" },
+  status: { status: "asc" },
+} as const;
+
 export const bugReportsRepository = {
   async findAll(
-    options?: BugReportFindAllOptions
+    options: BugReportFindAllOptions
   ): Promise<{ items: BugReport[]; total: number }> {
-    const page = options?.page || 1;
-    const limit = options?.limit || 10;
+    const { page, limit, skip, take } = resolvePagination(options.page, options.limit);
 
     const where = {
-      ...(options?.projectId ? { projectId: options.projectId } : {}),
-      ...(options?.status ? { status: options.status } : {}),
+      // Ownership comes from the project the report hangs off.
+      project: { ownerId: options.userId },
+      ...(options.projectId ? { projectId: options.projectId } : {}),
+      ...(options.status ? { status: options.status } : {}),
     };
+
+    const orderBy = resolveSort(
+      BUG_REPORT_SORT_WHITELIST,
+      options.sort,
+      BUG_REPORT_SORT_WHITELIST.newest
+    );
 
     const [rows, total] = await Promise.all([
       db.bugReport.findMany({
         where,
-        orderBy: {
-          createdAt: options?.sort === "oldest" ? "asc" : "desc",
-        },
-        skip: (page - 1) * limit,
-        take: limit,
+        orderBy,
+        skip,
+        take,
       }),
       db.bugReport.count({ where }),
     ]);
@@ -52,19 +86,36 @@ export const bugReportsRepository = {
     return { items: rows.map(mapBugReport), total };
   },
 
-  async findById(id: string): Promise<BugReport | null> {
-    const row = await db.bugReport.findUnique({ where: { id } });
+  /**
+   * Finds a bug report the user owns.
+   *
+   * The owner filter is part of the lookup, so a report belonging to
+   * somebody else is indistinguishable from one that does not exist.
+   */
+  async findById(id: string, userId: string): Promise<BugReport | null> {
+    const row = await db.bugReport.findFirst({
+      where: { id, project: { ownerId: userId } },
+    });
     return row ? mapBugReport(row) : null;
   },
 
-  async create(
-    data: CreateBugReportInput & { status?: BugReportStatus; isDemo?: boolean }
-  ): Promise<BugReport> {
-    const ownerId = await usersRepository.getOrCreateDemoUserId();
+  /**
+   * Finds a bug report by its project, for the user.
+   */
+  async findByProjectId(
+    projectId: string,
+    userId: string
+  ): Promise<BugReport | null> {
+    const row = await db.bugReport.findFirst({
+      where: { projectId, project: { ownerId: userId } },
+    });
+    return row ? mapBugReport(row) : null;
+  },
 
+  async create(data: CreateBugReportData): Promise<BugReport> {
     const row = await db.bugReport.create({
       data: {
-        ownerId,
+        ownerId: data.ownerId,
         projectId: data.projectId,
         title: data.title,
         description: data.description,
@@ -81,13 +132,14 @@ export const bugReportsRepository = {
     return mapBugReport(row);
   },
 
-  async count(): Promise<number> {
-    return db.bugReport.count();
+  async countByOwner(userId: string): Promise<number> {
+    return db.bugReport.count({ where: { project: { ownerId: userId } } });
   },
 
-  async countByStatus(): Promise<Record<string, number>> {
+  async countByStatus(userId: string): Promise<Record<string, number>> {
     const rows = await db.bugReport.groupBy({
       by: ["status"],
+      where: { project: { ownerId: userId } },
       _count: { _all: true },
     });
 

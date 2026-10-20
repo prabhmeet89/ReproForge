@@ -41,6 +41,10 @@ export async function apiFetch<T>(
 
   const response = await fetch(url, {
     ...options,
+    // The session lives in an httpOnly cookie, so the browser has to be
+    // told to send it. Without this, every authenticated request goes out
+    // without the cookie and comes back 401.
+    credentials: "include",
     headers: {
       ...defaultHeaders,
       ...options.headers,

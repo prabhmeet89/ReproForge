@@ -1,33 +1,42 @@
 import { db } from "../../config/db";
 
-/**
- * Phase 2 has no authentication yet (that lands in Phase 3), but `Project` and
- * `BugReport` both require an owner. Until auth exists, every row is owned by
- * a single demo user that is created on demand.
- */
-export const DEMO_USER_EMAIL = "demo@reproforge.local";
-
 export const usersRepository = {
   /**
-   * Returns the id of the demo owner, creating it on first use.
+   * Finds a user by email, creating the account when it does not exist.
    *
    * `upsert` (instead of find-then-create) keeps this safe when two requests
    * race on the unique email constraint.
    */
-  async getOrCreateDemoUserId(): Promise<string> {
-    const user = await db.user.upsert({
-      where: { email: DEMO_USER_EMAIL },
-      update: {},
-      create: {
-        email: DEMO_USER_EMAIL,
-        // Placeholder only — there is no login flow yet, so this is never
-        // verified against. It must never be returned in an API response.
-        passwordHash: "not-a-real-hash",
-        name: "Demo User",
-      },
-      select: { id: true },
+  async findOrCreateByEmail(data: {
+    email: string;
+    passwordHash: string;
+    name?: string;
+  }): Promise<{ id: string; email: string; created: boolean }> {
+    const existing = await db.user.findUnique({
+      where: { email: data.email },
+      select: { id: true, email: true },
     });
 
-    return user.id;
+    if (existing) {
+      return { ...existing, created: false };
+    }
+
+    const user = await db.user.create({
+      data: {
+        email: data.email,
+        passwordHash: data.passwordHash,
+        name: data.name || data.email.split("@")[0] || "User",
+      },
+      select: { id: true, email: true },
+    });
+
+    return { ...user, created: true };
+  },
+
+  async findById(id: string): Promise<{ id: string; email: string; name: string } | null> {
+    return db.user.findUnique({
+      where: { id },
+      select: { id: true, email: true, name: true },
+    });
   },
 };

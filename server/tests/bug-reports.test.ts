@@ -1,29 +1,25 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import request from "supertest";
-import app from "../src/app";
-import { projectsRepository } from "../src/modules/projects/projects.repository";
-import { bugReportsRepository } from "../src/modules/bug-reports/bug-reports.repository";
+import { db } from "../src/config/db";
+import { createTestUser } from "./helpers/auth";
 
 describe("Bug Reports API", () => {
-  let sampleProjectId: string;
-
   beforeEach(async () => {
-    await projectsRepository.clear();
-    await bugReportsRepository.clear();
-
-    const project = await projectsRepository.create({
-      name: "test-auth-app",
-      defaultBranch: "main",
-    });
-    sampleProjectId = project.id;
+    await db.session.deleteMany();
+    await db.user.deleteMany();
   });
 
   describe("POST /api/bug-reports", () => {
     it("should create a bug report with 201 and initial status 'submitted'", async () => {
-      const res = await request(app)
+      const { agent } = await createTestUser("bugs");
+
+      const project = await agent
+        .post("/api/projects")
+        .send({ name: "test-auth-app" });
+
+      const res = await agent
         .post("/api/bug-reports")
         .send({
-          projectId: sampleProjectId,
+          projectId: project.body.data.id,
           title: "Login button disabled after form validation error",
           description: "When entering an invalid password then correcting it, the submit button remains disabled.",
           expectedBehavior: "The submit button should enable as soon as all input fields pass client-side regex check.",
@@ -37,14 +33,20 @@ describe("Bug Reports API", () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.id).toBeDefined();
       expect(res.body.data.status).toBe("submitted");
-      expect(res.body.data.projectId).toBe(sampleProjectId);
+      expect(res.body.data.projectId).toBe(project.body.data.id);
     });
 
     it("should return 422 with field errors when required fields are missing", async () => {
-      const res = await request(app)
+      const { agent } = await createTestUser("bugs");
+
+      const project = await agent
+        .post("/api/projects")
+        .send({ name: "test-auth-app" });
+
+      const res = await agent
         .post("/api/bug-reports")
         .send({
-          projectId: sampleProjectId,
+          projectId: project.body.data.id,
           // title missing
           description: "A description that is valid length but missing title",
           expectedBehavior: "Expected behavior here",
@@ -59,7 +61,9 @@ describe("Bug Reports API", () => {
     });
 
     it("should return 404 when projectId does not exist", async () => {
-      const res = await request(app)
+      const { agent } = await createTestUser("bugs");
+
+      const res = await agent
         .post("/api/bug-reports")
         .send({
           projectId: "non-existent-project-id-12345",
@@ -75,16 +79,22 @@ describe("Bug Reports API", () => {
     });
 
     it("should return 422 when logs exceed 50,000 characters", async () => {
+      const { agent } = await createTestUser("bugs");
+
+      const project = await agent
+        .post("/api/projects")
+        .send({ name: "test-auth-app" });
+
       const oversizedLogs = "a".repeat(50001);
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/bug-reports")
         .send({
-          projectId: sampleProjectId,
+          projectId: project.body.data.id,
           title: "Bug report with oversized logs payload",
           description: "Valid description for testing oversized logs",
-          expectedBehavior: "Valid expected behavior for testing",
-          actualBehavior: "Valid actual behavior for testing",
+          expectedBehavior: "Valid expected behavior for testing oversized logs",
+          actualBehavior: "Valid actual behavior for testing oversized logs",
           logs: oversizedLogs,
         });
 
@@ -98,16 +108,23 @@ describe("Bug Reports API", () => {
 
   describe("GET /api/bug-reports", () => {
     it("should return paginated list and filter by projectId", async () => {
-      await bugReportsRepository.create({
-        projectId: sampleProjectId,
+      const { agent } = await createTestUser("bugs");
+
+      const project = await agent
+        .post("/api/projects")
+        .send({ name: "test-auth-app" });
+
+      await agent.post("/api/bug-reports").send({
+        projectId: project.body.data.id,
         title: "Bug Report 1",
         description: "Description 1 with enough characters",
         expectedBehavior: "Expected 1",
         actualBehavior: "Actual 1",
-        status: "submitted",
       });
 
-      const res = await request(app).get(`/api/bug-reports?projectId=${sampleProjectId}&page=1&limit=5`);
+      const res = await agent.get(
+        `/api/bug-reports?projectId=${project.body.data.id}&page=1&limit=5`
+      );
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);

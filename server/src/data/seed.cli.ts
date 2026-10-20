@@ -4,8 +4,11 @@ import { db } from "../config/db";
 /**
  * Standalone seed runner.
  *
- *   npm run db:seed            → seeds only if the database is empty
- *   npm run db:seed -- --force → wipes the data and reseeds
+ *   npm run db:seed            → seeds only if the demo data is missing
+ *   npm run db:seed -- --force → wipes the demo rows and reseeds
+ *
+ * The seed needs DEMO_EMAIL and DEMO_PASSWORD in server/.env, and it
+ * refuses to run when NODE_ENV=production.
  */
 async function main() {
   const force = process.argv.includes("--force");
@@ -16,15 +19,16 @@ async function main() {
     console.log("ℹ️  Nothing was written.");
   } else {
     console.log(
-      `📊 Seeded: ${result.projects} projects, ${result.bugReports} bug reports, ${result.testRuns} test runs.`
+      `📊 Seeded for ${result.email}: ${result.projects} projects, ${result.bugReports} bug reports, ${result.testRuns} test runs.`
     );
+    console.log(`🔑 You can log in with ${result.email} and the DEMO_PASSWORD from your .env.`);
   }
 
   await db.$disconnect();
 }
 
 main().catch(async (err) => {
-  console.error("❌ Seed failed:", err);
+  console.error("❌ Seed failed:", err.message || err);
   await db.$disconnect();
   process.exit(1);
 });

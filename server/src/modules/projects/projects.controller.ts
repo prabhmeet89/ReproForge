@@ -2,23 +2,24 @@ import { Request, Response } from "express";
 import { projectsService } from "./projects.service";
 import { CreateProjectInput, ProjectQueryParams } from "./projects.schema";
 import { sendSuccess, sendPaginated } from "../../utils/response";
+import { getRequestUserId } from "../../utils/requestUser";
 
 export const projectsController = {
   async list(req: Request, res: Response) {
     const query = req.query as unknown as ProjectQueryParams;
-    const { items, meta } = await projectsService.getProjects(query);
+    const { items, meta } = await projectsService.getProjects(query, getRequestUserId(req));
     return sendPaginated(res, items, meta);
   },
 
   async getOne(req: Request, res: Response) {
     const id = req.params.id as string;
-    const project = await projectsService.getProjectById(id);
+    const project = await projectsService.getProjectById(id, getRequestUserId(req));
     return sendSuccess(res, project, "Project retrieved successfully");
   },
 
   async create(req: Request, res: Response) {
     const input = req.body as CreateProjectInput;
-    const project = await projectsService.createProject(input);
+    const project = await projectsService.createProject(input, getRequestUserId(req));
     return sendSuccess(res, project, "Project created successfully", 201);
   },
 };

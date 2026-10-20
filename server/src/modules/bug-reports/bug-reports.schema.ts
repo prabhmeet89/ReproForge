@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEFAULT_LIMIT, DEFAULT_PAGE, MAX_LIMIT } from "../../utils/pagination";
 
 export const bugReportStatusEnum = z.enum([
   "submitted",
@@ -42,23 +43,39 @@ export const createBugReportSchema = z
     stackTrace: z.string().max(50000, "Stack trace cannot exceed 50,000 characters").optional(),
     logs: z.string().max(50000, "Logs cannot exceed 50,000 characters").optional(),
   })
+  // `.strict()` means ownerId / isDemo / userId in the body are rejected
+  // with a 422 — ownership always comes from the session, never the client.
   .strict();
+
+/**
+ * The orderings a bug report list accepts.
+ *
+ * This is a whitelist, not a free-form string: the value is validated here
+ * and mapped to a fixed `orderBy` in the repository.
+ */
+export const bugReportSortEnum = z.enum([
+  "newest",
+  "oldest",
+  "title",
+  "title-desc",
+  "status",
+]);
 
 export const bugReportQuerySchema = z
   .object({
     page: z
       .string()
       .optional()
-      .default("1")
-      .transform((val) => Math.max(1, parseInt(val, 10) || 1)),
+      .default(String(DEFAULT_PAGE))
+      .transform((val) => Math.max(1, parseInt(val, 10) || DEFAULT_PAGE)),
     limit: z
       .string()
       .optional()
-      .default("10")
-      .transform((val) => Math.min(100, Math.max(1, parseInt(val, 10) || 10))),
+      .default(String(DEFAULT_LIMIT))
+      .transform((val) => Math.min(MAX_LIMIT, Math.max(1, parseInt(val, 10) || DEFAULT_LIMIT))),
     status: bugReportStatusEnum.optional(),
     projectId: z.string().trim().optional(),
-    sort: z.enum(["newest", "oldest"]).optional().default("newest"),
+    sort: bugReportSortEnum.optional().default("newest"),
   })
   .strict();
 

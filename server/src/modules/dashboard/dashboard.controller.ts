@@ -3,17 +3,28 @@ import { projectsRepository } from "../projects/projects.repository";
 import { bugReportsRepository } from "../bug-reports/bug-reports.repository";
 import { testRunsRepository } from "../test-runs/test-runs.repository";
 import { sendSuccess } from "../../utils/response";
+import { getRequestUserId } from "../../utils/requestUser";
 
 export const dashboardController = {
-  async summary(_req: Request, res: Response) {
-    const { total: totalProjects } = await projectsRepository.findAll({ limit: 1 });
-    const { total: totalBugReports, items: recentBugReports } = await bugReportsRepository.findAll({
+  async summary(req: Request, res: Response) {
+    // Every count and every recent row is scoped to the caller, so the
+    // dashboard shows the user's own data and nothing else.
+    const userId = getRequestUserId(req);
+
+    const totalProjects = await projectsRepository.countByOwner(userId);
+    const totalBugReports = await bugReportsRepository.countByOwner(userId);
+    const statusCounts = await bugReportsRepository.countByStatus(userId);
+    const totalTestRuns = await testRunsRepository.countByOwner(userId);
+
+    const { items: recentBugReports } = await bugReportsRepository.findAll({
+      userId,
       limit: 5,
       sort: "newest",
     });
-    const statusCounts = await bugReportsRepository.countByStatus();
-    const { total: totalTestRuns, items: recentTestRuns } = await testRunsRepository.findAll({
+    const { items: recentTestRuns } = await testRunsRepository.findAll({
+      userId,
       limit: 5,
+      sort: "newest",
     });
 
     const summaryData = {
