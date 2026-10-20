@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-
 export function CursorGlow() {
   useEffect(() => {
     if (!window.matchMedia("(any-pointer: fine)").matches) return;
