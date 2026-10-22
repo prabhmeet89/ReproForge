@@ -28,7 +28,7 @@ ReproForge takes a bug report and your project code, analyzes the bug with an LL
 
 ```text
 bug-to-repro-ai/
-├── client/                  # Frontend (React + TypeScript + Vite + Tailwind CSS v4)
+├── frontend/                # Frontend (React + TypeScript + Vite + Tailwind CSS v4)
 │   ├── src/
 │   │   ├── components/      # Reusable UI components (ui/, layout/, auth/, landing/)
 │   │   ├── pages/           # Page views
@@ -41,7 +41,7 @@ bug-to-repro-ai/
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── vite.config.ts
-├── server/                  # Backend (Node.js + Express + TypeScript)
+├── backend/                 # Backend (Node.js + Express + TypeScript)
 │   ├── src/
 │   │   ├── config/          # Zod env schema & validation (env.ts)
 │   │   ├── middleware/      # requireAuth, csrf, rate limit, error & 404 handlers
@@ -88,7 +88,7 @@ PostgreSQL are needed**. `docker-compose.yml` stays in the repo as a
 placeholder for the Redis queue in Phase 7.
 
 ```powershell
-cd server
+cd backend
 npm install
 Copy-Item .env.example .env
 ```
@@ -101,7 +101,7 @@ migrations:
 npx prisma migrate dev
 
 # (Optional) Seed the demo account and its sample projects / bug reports.
-# Needs DEMO_EMAIL and DEMO_PASSWORD in server/.env, and refuses to run
+# Needs DEMO_EMAIL and DEMO_PASSWORD in backend/.env, and refuses to run
 # when NODE_ENV=production.
 npm run db:seed
 ```
@@ -111,9 +111,9 @@ npm run db:seed
 > reject it over plain `http://` — so login will silently fail. Start the
 > dev server with `$env:NODE_ENV="development"` to override it.
 
-### 3. Backend (Server) Setup
+### 3. Backend Setup
 ```powershell
-cd server
+cd backend
 
 # Start dev server with auto-reload (runs on http://localhost:3001)
 npm run dev
@@ -125,10 +125,10 @@ npm run build
 Health check endpoint:
 [http://localhost:3001/api/health](http://localhost:3001/api/health)
 
-### 4. Frontend (Client) Setup
+### 4. Frontend Setup
 Open a second PowerShell window:
 ```powershell
-cd client
+cd frontend
 npm install
 
 # Copy environment variables file if not already done
@@ -152,10 +152,10 @@ it — another user cannot see or open them.
 ### 6. Tests
 
 ```powershell
-cd server
+cd backend
 npm test          # 59 tests against an isolated SQLite test database
 
-cd ..\client
+cd ..\frontend
 npm test          # 17 tests (Vitest + Testing Library)
 ```
 
@@ -170,7 +170,7 @@ the error codes and the pagination and sorting rules.
 
 ## Phase 2 rules
 - Phase 2 = database + auth only. Do not touch the landing page
-  (client/src/components/landing, pages/LandingPage.tsx, CursorGlow).
+  (frontend/src/components/landing, pages/LandingPage.tsx, CursorGlow).
 - Never use Bash echo to print status; write status in the reply.
 - Ask me BEFORE destructive commands: prisma migrate reset,
   docker compose down -v, DROP/TRUNCATE on any non-test database,

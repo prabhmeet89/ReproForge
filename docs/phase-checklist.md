@@ -42,7 +42,7 @@
 - [x] Install and configure Prisma (Prisma 5.22.0, `prisma-client-js` generator)
 - [x] Create Prisma schema (User, Session, Project, BugReport, TestRun)
 - [x] Run initial migration (`20261020000000_init`) plus `20261020111054_add_testrun_output` for `TestRun.stdout` / `TestRun.stderr`
-- [x] Create seed script with sample data (`npm run db:seed`, add `-- --force` to wipe and reseed) — needs `DEMO_EMAIL` and `DEMO_PASSWORD` in `server/.env`, and refuses to run when `NODE_ENV=production`
+- [x] Create seed script with sample data (`npm run db:seed`, add `-- --force` to wipe and reseed) — needs `DEMO_EMAIL` and `DEMO_PASSWORD` in `backend/.env`, and refuses to run when `NODE_ENV=production`
 - [x] Test database connection
 - [x] Wire the repositories to Prisma — `projects`, `bug-reports` and `test-runs` repositories now read/write real rows instead of in-memory arrays
 - [x] Isolate the test database — tests run against `prisma/test.db`, never the dev database

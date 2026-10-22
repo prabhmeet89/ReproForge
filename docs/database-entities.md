@@ -1,7 +1,7 @@
 # Database Entities — ReproForge
 
 > **Note:** This document mirrors the live Prisma schema at
-> `server/prisma/schema.prisma`. If the two ever disagree, the schema file is
+> `backend/prisma/schema.prisma`. If the two ever disagree, the schema file is
 > the source of truth.
 
 ---
