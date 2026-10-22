@@ -12,5 +12,11 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/tests/setup.ts',
+    // React's production build does not export `act`, so Testing Library
+    // cannot render anything under NODE_ENV=production. Pinning the mode
+    // here keeps the suite runnable whatever the ambient environment is.
+    env: {
+      NODE_ENV: 'development',
+    },
   },
 })

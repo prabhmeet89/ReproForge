@@ -14,6 +14,7 @@ import '@fontsource/jetbrains-mono/500.css'
 
 import './index.css'
 import App from './App.tsx'
+import { UnauthorizedHandler } from './components/auth/UnauthorizedHandler'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +29,8 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        {/* Registers the 401 -> clear cache + redirect behaviour once. */}
+        <UnauthorizedHandler />
         <App />
       </BrowserRouter>
     </QueryClientProvider>

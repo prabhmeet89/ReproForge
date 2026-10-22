@@ -4,10 +4,16 @@ import { cn } from "../../lib/utils";
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   label?: string;
+  /**
+   * Renders the error message below the field. Set it to false when a
+   * wrapper renders the message itself — the error styling on the border
+   * still applies either way.
+   */
+  showErrorText?: boolean;
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, error, label, id, ...props }, ref) => {
+  ({ className, error, label, id, showErrorText = true, ...props }, ref) => {
     return (
       <div className="w-full space-y-1.5">
         {label && (
@@ -25,7 +31,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
           {...props}
         />
-        {error && <p className="text-xs text-rose-400 mt-1">{error}</p>}
+        {error && showErrorText && (
+          <p className="text-xs text-rose-400 mt-1">{error}</p>
+        )}
       </div>
     );
   }

@@ -48,3 +48,49 @@ export const bugReportFormSchema = z.object({
 });
 
 export type BugReportFormData = z.infer<typeof bugReportFormSchema>;
+
+// --- Authentication schemas ---
+// These mirror server/src/modules/auth/auth.schema.ts exactly. The server
+// is the authority, but the client checks the same rules first so the user
+// gets an instant answer instead of a round trip.
+
+/**
+ * Email is trimmed and lower-cased, so "User@Example.COM " and
+ * "user@example.com" can never become two different accounts.
+ */
+const authEmail = z
+  .string({ message: "Email is required" })
+  .trim()
+  .toLowerCase()
+  .min(1, "Email cannot be empty")
+  .email("Email must be a valid email address")
+  .max(254, "Email cannot exceed 254 characters");
+
+// Signup: the server requires at least 10 characters and at most 128.
+export const signupFormSchema = z
+  .object({
+    email: authEmail,
+    password: z
+      .string({ message: "Password is required" })
+      .min(10, "Password must be at least 10 characters")
+      .max(128, "Password cannot exceed 128 characters"),
+  })
+  .refine((data) => data.password !== data.email, {
+    path: ["password"],
+    message: "Password must not equal the email",
+  });
+
+// Login: the server's own login schema only requires a non-empty password
+// (it has to accept whatever was already stored). The client is stricter
+// and asks for the same 10 characters signup does — every account was
+// created with a password that long, so this blocks no real user.
+export const loginFormSchema = z.object({
+  email: authEmail,
+  password: z
+    .string({ message: "Password is required" })
+    .min(10, "Password must be at least 10 characters")
+    .max(128, "Password cannot exceed 128 characters"),
+});
+
+export type SignupFormData = z.infer<typeof signupFormSchema>;
+export type LoginFormData = z.infer<typeof loginFormSchema>;

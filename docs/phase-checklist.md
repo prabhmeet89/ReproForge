@@ -19,6 +19,7 @@
 - [x] Documentation: wireframes.md
 - [x] Documentation: phase-checklist.md
 - [x] Documentation: DESIGN.md
+- [x] Documentation: api.md (endpoints, auth flow, error codes)
 - [x] Documentation: README.md
 - [x] .env.example files for client and server
 - [x] Empty folders with .gitkeep
@@ -61,9 +62,11 @@
 - [x] Central Prisma error mapping — P2002 → 409, P2025 → 404, P2003 → 422, anything else → 500 with no internals
 - [x] Pagination capped at 50 per page, sort fields from a whitelist
 - [x] Demo seed is a dev-only script (`npm run db:seed`) that refuses to run in production
-- [ ] Frontend login/register pages
-- [ ] Auth context/state management
-- [ ] Protected routes on frontend
+- [x] Frontend login/register pages — `/login` and `/signup`, built from the existing UI components, with react-hook-form + Zod mirroring the server rules
+- [x] Auth context/state management — `useMe` / `useLogin` / `useSignup` / `useLogout` hooks; the whole TanStack Query cache is cleared on login and on logout so one user never sees another user's cached data
+- [x] Protected routes on frontend — `ProtectedRoute` guards every `/app/*` route (skeleton while `/me` loads, redirect to `/login?returnTo=…` when logged out); a logged-in user on `/login` or `/signup` is sent to `/app`
+- [x] Session expires mid-use — a 401 from any protected call clears the cache and redirects to `/login`, keeping `returnTo`
+- [x] Account email shown in the app shell (top bar) and read-only in the Settings profile section
 
 ## Phase 4 — Project Management (CRUD)
 - [ ] POST /api/projects (create)

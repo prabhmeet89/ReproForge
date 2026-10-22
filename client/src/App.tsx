@@ -12,6 +12,9 @@ import { TestRunsPage } from "./pages/TestRunsPage";
 import { TestRunDetailPage } from "./pages/TestRunDetailPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { LoginPage } from "./pages/LoginPage";
+import { SignupPage } from "./pages/SignupPage";
+import { ProtectedRoute, PublicOnlyRoute } from "./components/auth/ProtectedRoute";
 
 function App() {
   return (
@@ -19,8 +22,33 @@ function App() {
       {/* Public Landing Page */}
       <Route path="/" element={<LandingPage />} />
 
-      {/* Developer Console Layout */}
-      <Route path="/app" element={<AppLayout />}>
+      {/* Authentication — a logged-in user is bounced back to the console. */}
+      <Route
+        path="/login"
+        element={
+          <PublicOnlyRoute>
+            <LoginPage />
+          </PublicOnlyRoute>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <PublicOnlyRoute>
+            <SignupPage />
+          </PublicOnlyRoute>
+        }
+      />
+
+      {/* Developer Console Layout — every route here needs a session. */}
+      <Route
+        path="/app"
+        element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<DashboardPage />} />
         <Route path="projects" element={<ProjectsPage />} />
         <Route path="projects/new" element={<CreateProjectPage />} />
