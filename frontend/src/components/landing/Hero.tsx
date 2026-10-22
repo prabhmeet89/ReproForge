@@ -1,12 +1,19 @@
+import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles, Terminal } from "lucide-react";
 import { Button } from "../ui/Button";
 import { GithubIcon } from "../ui/GithubIcon";
 import { VerdictDiagram } from "./VerdictDiagram";
+import { BeamBackground } from "./BeamBackground";
 
 export function Hero() {
+  const heroRef = useRef<HTMLElement | null>(null);
+
   return (
-    <section className="relative pt-28 pb-16 md:pt-36 md:pb-24 overflow-hidden">
+    <section ref={heroRef} className="relative pt-28 pb-16 md:pt-36 md:pb-24 overflow-hidden">
+      {/* Light Beam Background (mounted once, behind hero text and diagram) */}
+      <BeamBackground heroRef={heroRef} />
+
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
           {/* Left column — text stack (left-aligned) */}

@@ -67,16 +67,16 @@ export function AuthLayout() {
                 </p>
               </div>
 
-              {/* Giant bottom brand watermark (partly cropped by bottom edge, faded out towards top) */}
+              {/* Giant bottom brand watermark (fully visible inside column, faded out towards top) */}
               <div
                 aria-hidden="true"
-                className="pointer-events-none mt-auto pt-16 overflow-hidden -mb-10 -ml-2"
+                className="pointer-events-none mt-auto pt-10 overflow-hidden select-none -mb-6"
                 style={{
                   maskImage: "linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 85%)",
                   WebkitMaskImage: "linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 85%)",
                 }}
               >
-                <span className="font-display font-extrabold text-[24vw] lg:text-[7.5rem] xl:text-[9rem] tracking-tighter text-white opacity-[0.07] leading-none block uppercase">
+                <span className="font-display font-extrabold text-[4.2rem] xl:text-[5.5rem] tracking-tight text-white opacity-[0.08] leading-none block uppercase whitespace-nowrap">
                   REPROFORGE
                 </span>
               </div>
