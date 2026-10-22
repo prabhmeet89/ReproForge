@@ -15,6 +15,7 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
 import { ProtectedRoute, PublicOnlyRoute } from "./components/auth/ProtectedRoute";
+import { AuthLayout } from "./components/auth/AuthLayout";
 
 function App() {
   return (
@@ -23,22 +24,24 @@ function App() {
       <Route path="/" element={<LandingPage />} />
 
       {/* Authentication — a logged-in user is bounced back to the console. */}
-      <Route
-        path="/login"
-        element={
-          <PublicOnlyRoute>
-            <LoginPage />
-          </PublicOnlyRoute>
-        }
-      />
-      <Route
-        path="/signup"
-        element={
-          <PublicOnlyRoute>
-            <SignupPage />
-          </PublicOnlyRoute>
-        }
-      />
+      <Route element={<AuthLayout />}>
+        <Route
+          path="/login"
+          element={
+            <PublicOnlyRoute>
+              <LoginPage />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <PublicOnlyRoute>
+              <SignupPage />
+            </PublicOnlyRoute>
+          }
+        />
+      </Route>
 
       {/* Developer Console Layout — every route here needs a session. */}
       <Route

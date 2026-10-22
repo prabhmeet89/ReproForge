@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LoginPage } from "../pages/LoginPage";
+import { SignupPage } from "../pages/SignupPage";
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
 import { useLogout } from "../hooks/useAuth";
 import * as apiModule from "../lib/api";
@@ -174,9 +175,57 @@ describe("LoginPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /show password/i }));
     expect(password.type).toBe("text");
+    expect(screen.getByRole("button", { name: /hide password/i })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /hide password/i }));
     expect(password.type).toBe("password");
+    expect(screen.getByRole("button", { name: /show password/i })).toHaveAttribute(
+      "aria-pressed",
+      "false"
+    );
+  });
+
+  it("detects and displays Caps Lock warning when active", async () => {
+    renderWithProviders(<LoginPage />);
+
+    const passwordInput = screen.getByLabelText("Password");
+    expect(screen.queryByText(/caps lock is on/i)).not.toBeInTheDocument();
+
+    fireEvent.keyDown(passwordInput, {
+      key: "a",
+      modifierCapsLock: true,
+      getModifierState: (key: string) => key === "CapsLock",
+    });
+
+    expect(screen.getByText(/caps lock is on/i)).toBeInTheDocument();
+  });
+
+  it("shows friendly rate limit message on 429 response", async () => {
+    vi.spyOn(apiModule, "apiFetch").mockImplementation(async (endpoint: string) => {
+      if (endpoint.startsWith("/api/auth/login")) {
+        throw new apiModule.ApiError("Too Many Requests", 429);
+      }
+      return { success: true, data: {} } as any;
+    });
+
+    renderWithProviders(<LoginPage />);
+
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "user@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "validpassword123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/too many sign in attempts/i)
+      ).toBeInTheDocument();
+    });
   });
 
   it("uses the autocomplete attributes the browser expects", async () => {
@@ -338,5 +387,55 @@ describe("useLogout", () => {
     await waitFor(() => {
       expect(client.getQueryData(["projects"])).toBeUndefined();
     });
+  });
+});
+
+describe("SignupPage", () => {
+  it("computes and displays password strength dynamically", async () => {
+    renderWithProviders(<SignupPage />);
+
+    const passwordInput = screen.getByLabelText("Password");
+    expect(screen.queryByTestId("strength-label")).not.toBeInTheDocument();
+
+    // Weak password
+    fireEvent.change(passwordInput, { target: { value: "simple" } });
+    expect(screen.getByTestId("strength-label")).toHaveTextContent(/weak/i);
+
+    // Strong password (length >= 14, uppercase + lowercase, digits + symbols)
+    fireEvent.change(passwordInput, { target: { value: "SuperSecur3!P@ssword" } });
+    expect(screen.getByTestId("strength-label")).toHaveTextContent(/strong/i);
+  });
+
+  it("handles duplicate email (409) and binds message to email field", async () => {
+    vi.spyOn(apiModule, "apiFetch").mockImplementation(async (endpoint: string) => {
+      if (endpoint.startsWith("/api/auth/signup")) {
+        throw new apiModule.ApiError("An account with this email already exists", 409);
+      }
+      return { success: true, data: {} } as any;
+    });
+
+    renderWithProviders(<SignupPage />);
+
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "existing@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "validpassword123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /create account/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/an account with this email already exists/i)
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("sets autocomplete to new-password", () => {
+    renderWithProviders(<SignupPage />);
+    expect(screen.getByLabelText("Password")).toHaveAttribute(
+      "autocomplete",
+      "new-password"
+    );
   });
 });
