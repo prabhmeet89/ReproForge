@@ -72,9 +72,13 @@ export function ProjectsPage() {
                     <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
                       <FolderGit2 className="w-4 h-4" />
                     </div>
-                    <span className="font-semibold text-sm text-white truncate" title={project.name}>
+                    <Link
+                      to={`/app/projects/${project.id}`}
+                      className="font-semibold text-sm text-white hover:text-emerald-300 transition-colors truncate"
+                      title={project.name}
+                    >
                       {project.name}
-                    </span>
+                    </Link>
                   </div>
                   {project.isDemo && (
                     <span className="text-[10px] font-mono px-1.5 py-0.2 bg-violet-500/10 text-violet-300 rounded border border-violet-500/30 shrink-0">
@@ -102,15 +106,21 @@ export function ProjectsPage() {
               </div>
 
               <div className="pt-4 border-t border-gray-850 mt-4 flex items-center justify-between text-[11px] text-gray-500">
-                <span>Created {new Date(project.createdAt).toLocaleDateString()}</span>
+                <Link
+                  to={`/app/projects/${project.id}`}
+                  className="text-emerald-400/90 hover:text-emerald-300 font-medium transition-colors"
+                >
+                  View snapshots →
+                </Link>
                 <Link
                   to={`/app/bug-reports?projectId=${project.id}`}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  View bugs →
+                  Bugs →
                 </Link>
               </div>
             </Card>
+
           ))}
         </div>
       )}

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Check, Copy, AlertTriangle } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 export interface CodeBlockProps {
@@ -7,7 +7,11 @@ export interface CodeBlockProps {
   language?: string;
   filename?: string;
   showLineNumbers?: boolean;
+  highlightLine?: number;
+  truncated?: boolean;
+  maxHeight?: string;
   className?: string;
+  onLineClick?: (line: number) => void;
 }
 
 export function CodeBlock({
@@ -15,9 +19,14 @@ export function CodeBlock({
   language = "typescript",
   filename,
   showLineNumbers = true,
+  highlightLine,
+  truncated = false,
+  maxHeight = "500px",
   className,
+  onLineClick,
 }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
+  const highlightedRef = useRef<HTMLDivElement | null>(null);
 
   const handleCopy = async () => {
     try {
@@ -29,24 +38,37 @@ export function CodeBlock({
     }
   };
 
-  const lines = code.trim().split("\n");
+  const lines = code ? code.split("\n") : [];
+
+  useEffect(() => {
+    if (highlightLine && highlightedRef.current) {
+      highlightedRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [highlightLine]);
 
   return (
     <div
       className={cn(
-        "rounded-2xl border border-gray-800 bg-gray-950/90 overflow-hidden font-mono text-xs shadow-2xl",
+        "rounded-2xl border border-gray-800 bg-gray-950/90 overflow-hidden font-mono text-xs shadow-2xl flex flex-col",
         className
       )}
     >
       {/* Header bar */}
-      <div className="flex items-center justify-between border-b border-gray-800/80 px-4 py-2.5 bg-gray-900/60">
-        <div className="flex items-center gap-2 text-gray-400">
-          <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
-          {filename && <span className="ml-2 font-mono text-xs text-gray-300">{filename}</span>}
+      <div className="flex items-center justify-between border-b border-gray-800/80 px-4 py-2.5 bg-gray-900/60 shrink-0">
+        <div className="flex items-center gap-2 text-gray-400 min-w-0">
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80 shrink-0" />
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80 shrink-0" />
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80 shrink-0" />
+          {filename && (
+            <span className="ml-2 font-mono text-xs text-gray-300 truncate" title={filename}>
+              {filename}
+            </span>
+          )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           {language && (
             <span className="text-[10px] uppercase font-semibold text-gray-500 tracking-wider">
               {language}
@@ -73,18 +95,53 @@ export function CodeBlock({
         </div>
       </div>
 
+      {/* Truncated notice banner */}
+      {truncated && (
+        <div className="px-4 py-1.5 bg-amber-500/10 border-b border-amber-500/20 text-amber-300 text-[11px] flex items-center gap-2">
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+          <span>Large file notice: Content is truncated to the first 256 KB.</span>
+        </div>
+      )}
+
       {/* Code contents with line numbers */}
-      <div className="p-4 overflow-x-auto text-gray-200 leading-relaxed max-h-[400px]">
-        {lines.map((line, index) => (
-          <div key={index} className="flex">
-            {showLineNumbers && (
-              <span className="w-8 shrink-0 select-none text-gray-600 text-right pr-4 text-[11px]">
-                {index + 1}
-              </span>
-            )}
-            <span className="whitespace-pre">{line || " "}</span>
-          </div>
-        ))}
+      <div
+        className="p-4 overflow-auto text-gray-200 leading-relaxed font-mono"
+        style={{ maxHeight }}
+      >
+        {lines.length === 0 ? (
+          <div className="text-gray-500 italic py-4 text-center">Empty file</div>
+        ) : (
+          lines.map((line, index) => {
+            const lineNum = index + 1;
+            const isHighlighted = highlightLine === lineNum;
+            return (
+              <div
+                key={index}
+                ref={isHighlighted ? highlightedRef : null}
+                onClick={() => onLineClick?.(lineNum)}
+                className={cn(
+                  "flex items-start rounded px-1 -mx-1 transition-colors",
+                  isHighlighted
+                    ? "bg-emerald-500/20 border-l-2 border-emerald-400 text-emerald-100 font-semibold"
+                    : "hover:bg-gray-900/50",
+                  onLineClick && "cursor-pointer"
+                )}
+              >
+                {showLineNumbers && (
+                  <span
+                    className={cn(
+                      "w-10 shrink-0 select-none text-right pr-4 text-[11px]",
+                      isHighlighted ? "text-emerald-400 font-bold" : "text-gray-600"
+                    )}
+                  >
+                    {lineNum}
+                  </span>
+                )}
+                <span className="whitespace-pre overflow-x-visible">{line || " "}</span>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

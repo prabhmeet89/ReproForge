@@ -68,7 +68,33 @@
 - [x] Session expires mid-use — a 401 from any protected call clears the cache and redirects to `/login`, keeping `returnTo`
 - [x] Account email shown in the app shell (top bar) and read-only in the Settings profile section
 
+## Phase 3 — Codebase Snapshots & Context Preview Pipeline
+- [x] Step 3A: Safe ZIP Ingestion Pipeline
+  - [x] Zip-slip prevention via path traversal rejection
+  - [x] Zip-bomb protection (max compression ratio check & byte limits)
+  - [x] Quota enforcement per project and per user
+  - [x] SHA-256 deduplication
+- [x] Step 3B: Repo Analysis & Secret Scanning/Redaction
+  - [x] Automatic framework, test runner, script, and language detection
+  - [x] Secret scanner with 15+ patterns (AWS keys, GitHub tokens, PEM keys, etc.)
+  - [x] In-place line-number-preserving secret redaction
+  - [x] Secure file browsing API with path traversal protection
+- [x] Step 3C: Context Preview Pipeline
+  - [x] Stack trace parser for Node.js / V8 traces
+  - [x] Longest-suffix frame matcher mapping frames to snapshot files
+  - [x] 6-tier deterministic relevance ranker bounded to 12 files and 60 KB
+  - [x] Bug report snapshot attachment and context preview endpoint
+  - [x] Sample app fixture (`payment-order-bug`) and ingestion automation
+- [x] Step 3D: Frontend UI & Documentation
+  - [x] Project detail page (`/app/projects/:id`) with snapshot list and drag-and-drop ZIP upload
+  - [x] Snapshot detail page (`/app/snapshots/:id`) with analysis cards, amber secrets warning, file tree, and code viewer
+  - [x] Bug report form snapshot selector filtered to project
+  - [x] Heuristic relevant files panel on bug report detail with visible label and context meter
+  - [x] Complete Vitest testing across frontend and backend
+  - [x] Note: GitHub App integration is deferred to Phase 10 (Stretch Goals).
+
 ## Phase 4 — Project Management (CRUD)
+
 - [ ] POST /api/projects (create)
 - [ ] GET /api/projects (list user's projects)
 - [ ] GET /api/projects/:id (single project)

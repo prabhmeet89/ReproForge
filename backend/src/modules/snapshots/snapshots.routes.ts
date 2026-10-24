@@ -3,7 +3,9 @@ import { snapshotsController } from "./snapshots.controller";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { requireAuth } from "../../middleware/requireAuth";
 import { uploadArchive } from "../../middleware/upload";
+import { validate } from "../../middleware/validate";
 import { DEFAULT_LIMITS } from "./snapshots.constants";
+import { sampleSnapshotSchema } from "./snapshots.schema";
 import { IngestionError } from "./zipIngestion";
 import { sendError } from "../../utils/response";
 import { Request, Response, NextFunction } from "express";
@@ -28,6 +30,19 @@ router.post(
   uploadArchive(DEFAULT_LIMITS.MAX_ARCHIVE_BYTES),
   asyncHandler(snapshotsController.upload)
 );
+
+/**
+ * POST /api/projects/:projectId/snapshots/sample
+ *
+ * Ingests a prepackaged sample repository for demonstration / testing.
+ */
+router.post(
+  "/projects/:projectId/snapshots/sample",
+  requireAuth,
+  validate({ body: sampleSnapshotSchema }),
+  asyncHandler(snapshotsController.ingestSample)
+);
+
 
 router.get(
   "/projects/:projectId/snapshots",

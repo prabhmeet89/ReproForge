@@ -45,7 +45,9 @@ export const bugReportFormSchema = z.object({
   affectedEndpoint: z.string().trim().max(500, "Endpoint max 500 characters").optional(),
   stackTrace: z.string().max(50000, "Stack trace cannot exceed 50,000 characters").optional(),
   logs: z.string().max(50000, "Logs cannot exceed 50,000 characters").optional(),
+  snapshotId: z.string().optional(),
 });
+
 
 export type BugReportFormData = z.infer<typeof bugReportFormSchema>;
 

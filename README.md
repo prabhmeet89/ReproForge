@@ -149,14 +149,39 @@ landing page, or log in with the demo account if you ran `npm run db:seed`.
 Every project, bug report and test run belongs to the account that created
 it — another user cannot see or open them.
 
-### 6. Tests
+### 6. Storage Layout & Environment Variables
+
+Snapshots and extracted file trees are stored on disk:
+- Upload temp directory: `<STORAGE_DIR>/tmp/`
+- Snapshot files: `<STORAGE_DIR>/snapshots/<snapshotId>/files/`
+
+Key backend environment variables (optional overrides in `backend/.env`):
+- `STORAGE_DIR`: Absolute or relative path to storage directory (default: `backend/storage`)
+- `MAX_ARCHIVE_SIZE`: Max upload ZIP size in bytes (default: `26214400` / 25 MB)
+- `MAX_EXTRACTED_SIZE`: Max extracted uncompressed size in bytes (default: `104857600` / 100 MB)
+- `MAX_SNAPSHOTS_PER_PROJECT`: Max snapshots per project (default: `10`)
+- `MAX_SNAPSHOTS_PER_USER`: Max total snapshots per user account (default: `25`)
+
+### 7. Sample App Workflow
+
+ReproForge includes a bundled sample microservice in `samples/payment-order-bug/` with a real floating-point payment webhook bug:
+1. Package the sample zip:
+   ```powershell
+   cd backend
+   npm run sample:zip
+   ```
+2. In the web console, create or open a project and click **"Add sample repo"** to ingest `payment-order-bug`.
+3. Create a bug report with fixture data from `samples/payment-order-bug.bugreport.json`.
+4. Inspect the **"Relevant Files"** heuristic panel on the bug report page to view ranked code snippets (`src/orders.js`, `src/app.js`) and matched stack frames with scrubbed secrets.
+
+### 8. Tests
 
 ```powershell
 cd backend
-npm test          # 59 tests against an isolated SQLite test database
+npm test          # 104 tests across 13 test files (isolated SQLite test database)
 
 cd ..\frontend
-npm test          # 17 tests (Vitest + Testing Library)
+npm test -- --run # 35 tests across 5 test files (Vitest + Testing Library)
 ```
 
 The client suite pins `NODE_ENV=development` for the test run, because
@@ -167,6 +192,7 @@ render without it.
 
 See [docs/api.md](docs/api.md) for the full endpoint list, the auth flow,
 the error codes and the pagination and sorting rules.
+
 
 ## Phase 2 rules
 - Phase 2 = database + auth only. Do not touch the landing page

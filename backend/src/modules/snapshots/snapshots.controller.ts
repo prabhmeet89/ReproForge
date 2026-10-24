@@ -5,6 +5,7 @@ import {
   snapshotQuerySchema,
   snapshotFilesQuerySchema,
   snapshotFileContentQuerySchema,
+  sampleSnapshotSchema,
 } from "./snapshots.schema";
 import { sendSuccess, sendPaginated } from "../../utils/response";
 import { getRequestUserId } from "../../utils/requestUser";
@@ -55,6 +56,37 @@ export const snapshotsController = {
       throw err;
     }
   },
+
+  /**
+   * POST /api/projects/:projectId/snapshots/sample
+   */
+  async ingestSample(req: Request, res: Response) {
+    const projectId = req.params.projectId as string;
+    const userId = getRequestUserId(req);
+
+    const parsed = sampleSnapshotSchema.parse(req.body || {});
+    const sampleName = parsed.sampleName || "payment-order-bug";
+    const label = parsed.label;
+
+    const { snapshot, deduplicated } = await snapshotsService.uploadSample(
+      projectId,
+      userId,
+      sampleName,
+      label
+    );
+
+    if (deduplicated) {
+      return sendSuccess(
+        res,
+        { ...snapshot, deduplicated: true },
+        "Snapshot already exists (deduplicated)",
+        200
+      );
+    }
+
+    return sendSuccess(res, snapshot, "Sample snapshot ingested successfully", 201);
+  },
+
 
   /**
    * GET /api/projects/:projectId/snapshots

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft } from "lucide-react";
@@ -7,6 +7,7 @@ import { bugReportFormSchema } from "../lib/schemas";
 import type { BugReportFormData } from "../lib/schemas";
 import { useCreateBugReport } from "../hooks/useBugReports";
 import { useProjects } from "../hooks/useProjects";
+import { useSnapshots } from "../hooks/useSnapshots";
 import { ApiError } from "../lib/api";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
@@ -17,6 +18,10 @@ import { Toast } from "../components/ui/Toast";
 
 export function CreateBugReportPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialProjectId = searchParams.get("projectId") || "";
+  const initialSnapshotId = searchParams.get("snapshotId") || "";
+
   const createBugReport = useCreateBugReport();
   const { data: projectsData, isLoading: isLoadingProjects } = useProjects();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -32,7 +37,8 @@ export function CreateBugReportPage() {
   } = useForm<BugReportFormData>({
     resolver: zodResolver(bugReportFormSchema),
     defaultValues: {
-      projectId: "",
+      projectId: initialProjectId,
+      snapshotId: initialSnapshotId,
       title: "",
       description: "",
       expectedBehavior: "",
@@ -43,6 +49,25 @@ export function CreateBugReportPage() {
     },
   });
 
+  const selectedProjectId = watch("projectId");
+  const { data: snapshotsData } = useSnapshots(selectedProjectId);
+
+  const rawSnapshots = Array.isArray(snapshotsData?.data)
+    ? snapshotsData.data
+    : Array.isArray(snapshotsData)
+    ? snapshotsData
+    : [];
+  const readySnapshots = rawSnapshots.filter((s: any) => s.status === "ready");
+  const snapshotOptions = [
+    { value: "", label: "No snapshot attached (optional)" },
+    ...readySnapshots.map((s) => ({
+      value: s.id,
+      label: `${s.label || "Snapshot " + (s.contentHash ? s.contentHash.slice(0, 8) : s.id.slice(0, 8))} (${s.fileCount} files)`,
+    })),
+  ];
+
+
+
   const descriptionVal = watch("description") || "";
   const expectedVal = watch("expectedBehavior") || "";
   const actualVal = watch("actualBehavior") || "";
@@ -51,11 +76,16 @@ export function CreateBugReportPage() {
 
   const onSubmit = async (data: BugReportFormData) => {
     try {
-      const created = await createBugReport.mutateAsync(data);
+      const payload: BugReportFormData = {
+        ...data,
+        snapshotId: data.snapshotId && data.snapshotId.trim() ? data.snapshotId.trim() : undefined,
+      };
+      const created = await createBugReport.mutateAsync(payload);
       setToastMessage("Bug report submitted successfully!");
       setTimeout(() => {
         navigate(`/app/bug-reports/${created.id}`);
       }, 1000);
+
     } catch (err) {
       if (err instanceof ApiError && err.errors) {
         err.errors.forEach((fieldError) => {
@@ -110,6 +140,24 @@ export function CreateBugReportPage() {
             error={errors.projectId?.message}
             {...register("projectId")}
           />
+
+          {/* Snapshot Selector (Optional) */}
+          <Select
+            id="snapshotId"
+            label="Attached Codebase Snapshot (Optional)"
+            options={snapshotOptions}
+            error={errors.snapshotId?.message}
+            disabled={!selectedProjectId}
+            helperText={
+              !selectedProjectId
+                ? "Select a project first to see its snapshots"
+                : readySnapshots.length === 0
+                ? "No ready snapshots found for this project"
+                : undefined
+            }
+            {...register("snapshotId")}
+          />
+
 
           {/* Bug Title */}
           <Input

@@ -9,11 +9,12 @@ export interface SelectOption {
 export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   error?: string;
   label?: string;
+  helperText?: string;
   options: SelectOption[];
 }
 
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, error, label, id, options, ...props }, ref) => {
+  ({ className, error, label, helperText, id, options, ...props }, ref) => {
     return (
       <div className="w-full space-y-1.5">
         {label && (
@@ -37,10 +38,15 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           ))}
         </select>
-        {error && <p className="text-xs text-rose-400 mt-1">{error}</p>}
+        {error ? (
+          <p className="text-xs text-rose-400 mt-1">{error}</p>
+        ) : helperText ? (
+          <p className="text-[11px] text-gray-500 mt-1">{helperText}</p>
+        ) : null}
       </div>
     );
   }
 );
+
 
 Select.displayName = "Select";

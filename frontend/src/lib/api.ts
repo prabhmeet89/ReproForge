@@ -71,9 +71,10 @@ export async function apiFetch<T>(
 ): Promise<ApiResponse<T>> {
   const url = `${API_BASE}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
 
-  const defaultHeaders: HeadersInit = {
-    "Content-Type": "application/json",
-  };
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+  const defaultHeaders: Record<string, string> = isFormData
+    ? {}
+    : { "Content-Type": "application/json" };
 
   const response = await fetch(url, {
     ...options,
@@ -83,9 +84,10 @@ export async function apiFetch<T>(
     credentials: "include",
     headers: {
       ...defaultHeaders,
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     },
   });
+
 
   let data: any;
   try {

@@ -2,6 +2,8 @@ import { db } from "../../config/db";
 import { bugReportsRepository, BugReport } from "./bug-reports.repository";
 import { CreateBugReportInput, BugReportQueryParams } from "./bug-reports.schema";
 import { projectsRepository } from "../projects/projects.repository";
+import { snapshotsRepository } from "../snapshots/snapshots.repository";
+import { buildContextPreview, type ContextPreviewResult } from "../../services/contextBuilder";
 import { AppError } from "../../utils/appError";
 import { PaginationMeta } from "../../utils/response";
 
@@ -47,6 +49,13 @@ export const bugReportsService = {
       throw AppError.notFound(`Referenced project with id "${input.projectId}" does not exist`);
     }
 
+    if (input.snapshotId) {
+      const snapshot = await snapshotsRepository.findById(input.snapshotId);
+      if (!snapshot || snapshot.projectId !== input.projectId) {
+        throw AppError.notFound(`Snapshot with id "${input.snapshotId}" was not found`);
+      }
+    }
+
     // The insert and its ownership check run in one transaction, so a
     // project cannot be deleted between the check and the insert.
     return await db.$transaction(async (tx) => {
@@ -64,6 +73,7 @@ export const bugReportsService = {
           logs: input.logs ?? null,
           status: "submitted",
           isDemo: false,
+          snapshotId: input.snapshotId ?? null,
         },
       });
 
@@ -80,7 +90,54 @@ export const bugReportsService = {
         status: row.status as BugReport["status"],
         createdAt: row.createdAt.toISOString(),
         isDemo: row.isDemo,
+        snapshotId: row.snapshotId ?? undefined,
       };
     });
   },
+
+  async attachSnapshot(
+    id: string,
+    snapshotId: string,
+    userId: string
+  ): Promise<BugReport> {
+    const report = await bugReportsRepository.findById(id, userId);
+    if (!report) {
+      throw AppError.notFound(`Bug report with id "${id}" was not found`);
+    }
+
+    const snapshot = await snapshotsRepository.findById(snapshotId);
+    if (!snapshot || snapshot.projectId !== report.projectId) {
+      throw AppError.notFound(`Snapshot with id "${snapshotId}" was not found`);
+    }
+
+    const updated = await bugReportsRepository.attachSnapshot(id, snapshotId);
+    if (!updated) {
+      throw AppError.notFound(`Bug report with id "${id}" was not found`);
+    }
+    return updated;
+  },
+
+  async getContextPreview(
+    id: string,
+    userId: string
+  ): Promise<ContextPreviewResult> {
+    const report = await bugReportsRepository.findById(id, userId);
+    if (!report) {
+      throw AppError.notFound(`Bug report with id "${id}" was not found`);
+    }
+
+    if (!report.snapshotId) {
+      throw AppError.badRequest(
+        `Bug report with id "${id}" does not have an attached snapshot`
+      );
+    }
+
+    return await buildContextPreview(report.snapshotId, {
+      stackTrace: report.stackTrace,
+      logs: report.logs,
+      description: report.description,
+      affectedEndpoint: report.affectedEndpoint,
+    });
+  },
 };
+

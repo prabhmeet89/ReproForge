@@ -80,12 +80,37 @@ Every route below requires a session. Without one the answer is **401**.
 | `GET` | `/api/projects` | The caller's projects only. Supports `page`, `limit`, `search`, `sort` |
 | `POST` | `/api/projects` | Creates a project owned by the caller |
 | `GET` | `/api/projects/:id` | 404 if the project is not the caller's |
+| `POST` | `/api/projects/:projectId/snapshots` | Multipart ZIP upload (`archive` file + optional `label`). Returns 201 (or 200 on deduplicated) |
+| `POST` | `/api/projects/:projectId/snapshots/sample` | Ingests a prepackaged sample repository (e.g. `payment-order-bug`) |
+| `GET` | `/api/projects/:projectId/snapshots` | Lists snapshots for a project (paginated) |
+| `GET` | `/api/snapshots/:id` | Retrieves snapshot metadata and repository analysis |
+| `GET` | `/api/snapshots/:id/files` | Lists files in snapshot with `kind` and `search` query parameters |
+| `GET` | `/api/snapshots/:id/files/content` | Reads file content safely with secret redaction (`path` query param) |
+| `DELETE` | `/api/snapshots/:id` | Deletes snapshot record and associated disk artifacts |
 | `GET` | `/api/bug-reports` | The caller's bug reports only. Supports `page`, `limit`, `status`, `projectId`, `sort` |
-| `POST` | `/api/bug-reports` | `projectId` must be one of the caller's projects |
+| `POST` | `/api/bug-reports` | `projectId` must be one of the caller's projects. Optional `snapshotId` |
 | `GET` | `/api/bug-reports/:id` | 404 if the bug report is not the caller's |
+| `PATCH` | `/api/bug-reports/:id/snapshot` | Attaches snapshot to bug report `{ snapshotId }` |
+| `GET` | `/api/bug-reports/:id/context-preview` | Heuristic context preview (ranked files, parsed frames, redacted logs) |
 | `GET` | `/api/test-runs` | The caller's test runs only. Supports `page`, `limit`, `status`, `bugReportId`, `sort` |
 | `GET` | `/api/test-runs/:id` | 404 if the test run is not the caller's |
 | `GET` | `/api/dashboard/summary` | Counts only the caller's rows |
+
+### Snapshot Error Codes
+
+When a snapshot upload or ingestion fails, the server responds with a specific error code in the error response envelope:
+
+| Error Code | HTTP Status | Description |
+|---|---|---|
+| `INVALID_ARCHIVE` | 400 | File is corrupt or not a valid ZIP archive |
+| `ARCHIVE_TOO_LARGE` | 413 | ZIP file exceeds the maximum archive size (25 MB) |
+| `TOO_MANY_FILES` | 422 | Archive contains more entries than the 5,000 file threshold |
+| `EXTRACTED_TOO_LARGE`| 422 | Uncompressed disk size exceeds the 100 MB extraction limit |
+| `UNSAFE_PATH` | 422 | Entry contains path traversal (`../`), absolute paths, or invalid chars |
+| `ZIP_BOMB` | 422 | Entry exceeds maximum compression ratio threshold (100:1) |
+| `EMPTY_SNAPSHOT` | 422 | Archive contains no valid, ingestible source files |
+| `QUOTA_EXCEEDED` | 429 | Snapshot count limit reached for project (10) or user (25) |
+
 
 ### Ownership
 

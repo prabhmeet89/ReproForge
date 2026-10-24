@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { bugReportsController } from "./bug-reports.controller";
-import { createBugReportSchema, bugReportQuerySchema } from "./bug-reports.schema";
+import {
+  createBugReportSchema,
+  bugReportQuerySchema,
+  attachSnapshotSchema,
+} from "./bug-reports.schema";
 import { validate } from "../../middleware/validate";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { requireAuth } from "../../middleware/requireAuth";
@@ -28,4 +32,16 @@ router.get(
   asyncHandler(bugReportsController.getOne)
 );
 
+router.patch(
+  "/:id/snapshot",
+  validate({ body: attachSnapshotSchema }),
+  asyncHandler(bugReportsController.attachSnapshot)
+);
+
+router.get(
+  "/:id/context-preview",
+  asyncHandler(bugReportsController.getContextPreview)
+);
+
 export default router;
+

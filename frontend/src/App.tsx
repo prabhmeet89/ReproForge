@@ -4,6 +4,8 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { CreateProjectPage } from "./pages/CreateProjectPage";
+import { ProjectDetailPage } from "./pages/ProjectDetailPage";
+import { SnapshotDetailPage } from "./pages/SnapshotDetailPage";
 import { BugReportsPage } from "./pages/BugReportsPage";
 import { CreateBugReportPage } from "./pages/CreateBugReportPage";
 import { BugReportDetailPage } from "./pages/BugReportDetailPage";
@@ -55,6 +57,8 @@ function App() {
         <Route index element={<DashboardPage />} />
         <Route path="projects" element={<ProjectsPage />} />
         <Route path="projects/new" element={<CreateProjectPage />} />
+        <Route path="projects/:id" element={<ProjectDetailPage />} />
+        <Route path="snapshots/:id" element={<SnapshotDetailPage />} />
         <Route path="bug-reports" element={<BugReportsPage />} />
         <Route path="bug-reports/new" element={<CreateBugReportPage />} />
         <Route path="bug-reports/:id" element={<BugReportDetailPage />} />
@@ -64,6 +68,7 @@ function App() {
         <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
+
 
       {/* Global 404 */}
       <Route path="*" element={<NotFoundPage />} />

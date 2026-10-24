@@ -1,6 +1,10 @@
 import { Request, Response } from "express";
 import { bugReportsService } from "./bug-reports.service";
-import { CreateBugReportInput, BugReportQueryParams } from "./bug-reports.schema";
+import {
+  CreateBugReportInput,
+  BugReportQueryParams,
+  AttachSnapshotInput,
+} from "./bug-reports.schema";
 import { sendSuccess, sendPaginated } from "../../utils/response";
 import { getRequestUserId } from "../../utils/requestUser";
 
@@ -25,4 +29,25 @@ export const bugReportsController = {
     const report = await bugReportsService.createBugReport(input, getRequestUserId(req));
     return sendSuccess(res, report, "Bug report created successfully", 201);
   },
+
+  async attachSnapshot(req: Request, res: Response) {
+    const id = req.params.id as string;
+    const { snapshotId } = req.body as AttachSnapshotInput;
+    const report = await bugReportsService.attachSnapshot(
+      id,
+      snapshotId,
+      getRequestUserId(req)
+    );
+    return sendSuccess(res, report, "Snapshot attached successfully");
+  },
+
+  async getContextPreview(req: Request, res: Response) {
+    const id = req.params.id as string;
+    const preview = await bugReportsService.getContextPreview(
+      id,
+      getRequestUserId(req)
+    );
+    return sendSuccess(res, preview, "Context preview retrieved successfully");
+  },
 };
+

@@ -42,10 +42,23 @@ export const createBugReportSchema = z
     affectedEndpoint: z.string().trim().max(500).optional(),
     stackTrace: z.string().max(50000, "Stack trace cannot exceed 50,000 characters").optional(),
     logs: z.string().max(50000, "Logs cannot exceed 50,000 characters").optional(),
+    snapshotId: z.string().trim().optional(),
   })
   // `.strict()` means ownerId / isDemo / userId in the body are rejected
   // with a 422 — ownership always comes from the session, never the client.
   .strict();
+
+export const attachSnapshotSchema = z
+  .object({
+    snapshotId: z
+      .string({ message: "snapshotId is required" })
+      .trim()
+      .min(1, "snapshotId cannot be empty"),
+  })
+  .strict();
+
+export type AttachSnapshotInput = z.infer<typeof attachSnapshotSchema>;
+
 
 /**
  * The orderings a bug report list accepts.

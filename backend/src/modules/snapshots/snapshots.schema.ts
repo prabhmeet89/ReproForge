@@ -58,3 +58,14 @@ export const snapshotFileContentQuerySchema = z.object({
 export type SnapshotFileContentQueryParams = z.infer<
   typeof snapshotFileContentQuerySchema
 >;
+
+// ---------------------------------------------------------------------------
+// Sample snapshot ingestion
+// ---------------------------------------------------------------------------
+
+export const sampleSnapshotSchema = z.object({
+  sampleName: z.string().trim().default("payment-order-bug").optional(),
+  label: z.string().trim().max(200).optional(),
+});
+export type SampleSnapshotInput = z.infer<typeof sampleSnapshotSchema>;
+

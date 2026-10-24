@@ -46,6 +46,8 @@ backend/prisma/*.db-shm
 # Artifact storage (uploaded zips / extracted snapshots)
 uploads/
 artifacts/
+storage/
+backend/storage/
 
 # AI tool skill directories (generated, duplicated per tool)
 .agents/

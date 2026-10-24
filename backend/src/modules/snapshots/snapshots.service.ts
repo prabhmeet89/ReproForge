@@ -27,6 +27,7 @@ import fs from "fs/promises";
 import path from "path";
 import { analyzeRepository } from "./snapshots.analysis";
 import { redactSecrets } from "../../services/secrets";
+import { zipDirectory } from "../../utils/zipUtils";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -88,7 +89,8 @@ export const snapshotsService = {
     projectId: string,
     userId: string,
     tmpFilePath: string,
-    label?: string
+    label?: string,
+    source: string = SNAPSHOT_SOURCE.ZIP
   ): Promise<{ snapshot: Snapshot; deduplicated: boolean }> {
     // 1. Ownership
     const project = await projectsRepository.findById(projectId, userId);
@@ -121,7 +123,7 @@ export const snapshotsService = {
     const placeholder = "pending-" + Date.now();
     const snapshotRow = await snapshotsRepository.create({
       projectId,
-      source: SNAPSHOT_SOURCE.ZIP,
+      source,
       label,
       contentHash: placeholder,
       storageKey: "", // filled after we know the ID
@@ -206,6 +208,72 @@ export const snapshotsService = {
         }
       }
     }
+  },
+
+  /**
+   * Ingests a prepackaged or disk-based sample application.
+   */
+  async uploadSample(
+    projectId: string,
+    userId: string,
+    sampleName: string = "payment-order-bug",
+    label?: string
+  ): Promise<{ snapshot: Snapshot; deduplicated: boolean }> {
+    const candidateDirs = [
+      path.resolve(process.cwd(), "samples", sampleName),
+      path.resolve(process.cwd(), "../samples", sampleName),
+      path.resolve(__dirname, "../../../samples", sampleName),
+      path.resolve(__dirname, "../../../../samples", sampleName),
+    ];
+
+    let sampleDir: string | null = null;
+    for (const dir of candidateDirs) {
+      try {
+        const stat = await fs.stat(dir);
+        if (stat.isDirectory()) {
+          sampleDir = dir;
+          break;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!sampleDir) {
+      throw AppError.notFound(`Sample "${sampleName}" was not found`);
+    }
+
+    await artifactStorage.ensureDir(artifactStorage.tmpDir());
+    const tmpZip = path.join(
+      artifactStorage.tmpDir(),
+      `sample-${Date.now()}-${Math.random().toString(36).slice(2)}.zip`
+    );
+
+    // Check if pre-zipped version exists next to sampleDir
+    const prezippedPath = path.join(path.dirname(sampleDir), `${sampleName}.zip`);
+    let hasPrezipped = false;
+    try {
+      const stat = await fs.stat(prezippedPath);
+      if (stat.isFile()) {
+        hasPrezipped = true;
+      }
+    } catch {
+      hasPrezipped = false;
+    }
+
+    if (hasPrezipped) {
+      await fs.copyFile(prezippedPath, tmpZip);
+    } else {
+      await zipDirectory(sampleDir, tmpZip);
+    }
+
+    return await this.upload(
+      projectId,
+      userId,
+      tmpZip,
+      label ?? `Sample: ${sampleName}`,
+      SNAPSHOT_SOURCE.SAMPLE
+    );
   },
 
   /**

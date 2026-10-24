@@ -16,7 +16,9 @@ export interface BugReport {
   status: BugStatus;
   createdAt: string;
   isDemo?: boolean;
+  snapshotId?: string;
 }
+
 
 export interface BugReportsFilter {
   projectId?: string;

@@ -15,6 +15,7 @@ export interface BugReport {
   status: BugReportStatus;
   createdAt: string;
   isDemo?: boolean;
+  snapshotId?: string;
 }
 
 export interface BugReportFindAllOptions {
@@ -39,6 +40,7 @@ export interface CreateBugReportData {
   logs?: string;
   status?: BugReportStatus;
   isDemo?: boolean;
+  snapshotId?: string;
 }
 
 /**
@@ -126,9 +128,18 @@ export const bugReportsRepository = {
         logs: data.logs ?? null,
         status: data.status || "submitted",
         isDemo: data.isDemo || false,
+        snapshotId: data.snapshotId ?? null,
       },
     });
 
+    return mapBugReport(row);
+  },
+
+  async attachSnapshot(id: string, snapshotId: string): Promise<BugReport | null> {
+    const row = await db.bugReport.update({
+      where: { id },
+      data: { snapshotId },
+    });
     return mapBugReport(row);
   },
 
@@ -169,6 +180,7 @@ function mapBugReport(row: {
   status: string;
   createdAt: Date;
   isDemo: boolean;
+  snapshotId?: string | null;
 }): BugReport {
   return {
     id: row.id,
@@ -183,5 +195,6 @@ function mapBugReport(row: {
     status: row.status as BugReportStatus,
     createdAt: toIsoString(row.createdAt),
     isDemo: row.isDemo,
+    snapshotId: row.snapshotId ?? undefined,
   };
 }
