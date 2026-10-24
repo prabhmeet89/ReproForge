@@ -55,6 +55,47 @@ const envSchema = z.object({
     .default("15")
     .transform((val) => parseInt(val, 10))
     .pipe(z.number().int().positive()),
+
+  // --- Snapshot Storage (Step 3A) ---
+
+  // Root directory for all artifact storage (snapshots, uploads).
+  STORAGE_DIR: z.string().optional(),
+
+  // Maximum archive upload size in bytes (default 25 MB).
+  MAX_ARCHIVE_SIZE: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined)),
+
+  // Maximum total extracted size in bytes (default 100 MB).
+  MAX_EXTRACTED_SIZE: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined)),
+
+  // Maximum number of ZIP entries (default 5000).
+  MAX_ENTRIES: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined)),
+
+  // Maximum snapshots per project (default 10).
+  MAX_SNAPSHOTS_PER_PROJECT: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined)),
+
+  // Maximum snapshots per user (default 25).
+  MAX_SNAPSHOTS_PER_USER: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined)),
+
+  // Upload rate limit: max uploads per hour per user (default 10, disabled in tests).
+  UPLOAD_RATE_LIMIT: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined)),
 });
 
 // Validate karo — agar koi variable missing ya galat hai toh clear error message dega

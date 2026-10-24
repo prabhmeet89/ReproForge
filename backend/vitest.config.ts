@@ -7,6 +7,9 @@ export default defineConfig({
     globalSetup: ["./tests/globalSetup.ts"],
     setupFiles: ["./tests/setup.ts"],
 
+    include: ["tests/**/*.test.ts"],
+    exclude: ["**/node_modules/**", "**/dist/**", "storage/**"],
+
     // The test files share one SQLite database and each of them wipes the
     // repositories in beforeEach (projectsRepository.clear(), etc.). Running
     // them in parallel would let one file delete rows another file just

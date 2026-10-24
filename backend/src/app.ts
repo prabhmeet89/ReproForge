@@ -14,6 +14,7 @@ import projectsRouter from "./modules/projects/projects.routes";
 import bugReportsRouter from "./modules/bug-reports/bug-reports.routes";
 import testRunsRouter from "./modules/test-runs/test-runs.routes";
 import dashboardRouter from "./modules/dashboard/dashboard.routes";
+import snapshotsRouter from "./modules/snapshots/snapshots.routes";
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use("/api/projects", projectsRouter);
 app.use("/api/bug-reports", bugReportsRouter);
 app.use("/api/test-runs", testRunsRouter);
 app.use("/api/dashboard", dashboardRouter);
+app.use("/api", snapshotsRouter);
 
 // --- Error Handling ---
 

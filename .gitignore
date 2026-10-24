@@ -36,12 +36,16 @@ Desktop.ini
 *.tsbuildinfo
 
 # Prisma / SQLite database files
-# The migration SQL in server/prisma/migrations/ IS committed — only the
+# The migration SQL in backend/prisma/migrations/ IS committed — only the
 # local database files are not.
-server/prisma/*.db
-server/prisma/*.db-journal
-server/prisma/*.db-wal
-server/prisma/*.db-shm
+backend/prisma/*.db
+backend/prisma/*.db-journal
+backend/prisma/*.db-wal
+backend/prisma/*.db-shm
+
+# Artifact storage (uploaded zips / extracted snapshots)
+uploads/
+artifacts/
 
 # AI tool skill directories (generated, duplicated per tool)
 .agents/

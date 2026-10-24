@@ -14,6 +14,9 @@ generator client {
 // BugStatus: submitted, investigating, investigated, test_generated, reproduced, unverified, failed
 // TestStatus: queued, running, passed, failed, timed_out, infra_error
 // ProjectSourceType: zip, sample, github
+// SnapshotSource: zip, sample, github
+// SnapshotStatus: processing, ready, failed
+// FileKind: source, test, config, doc, other
 
 model User {
   id         String    @id @default(uuid())
@@ -50,6 +53,7 @@ model Project {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   bugReports    BugReport[]
+  snapshots     RepoSnapshot[]
 
   @@index([ownerId, createdAt])
 }
@@ -69,6 +73,8 @@ model BugReport {
   logs             String?
   status           String   @default("submitted")
   isDemo           Boolean  @default(false)
+  snapshotId       String?
+  snapshot         RepoSnapshot? @relation(fields: [snapshotId], references: [id], onDelete: SetNull)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   testRuns         TestRun[]
@@ -93,4 +99,45 @@ model TestRun {
   createdAt           DateTime  @default(now())
 
   @@index([bugReportId, createdAt])
+}
+
+model RepoSnapshot {
+  id                 String   @id @default(uuid())
+  projectId          String
+  project            Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  source             String   // zip | sample | github
+  label              String?
+  status             String   @default("processing") // processing | ready | failed
+  errorCode          String?
+  errorMessage       String?
+  contentHash        String
+  commitSha          String?
+  fileCount          Int      @default(0)
+  totalBytes         Int      @default(0)
+  excludedCount      Int      @default(0)
+  storageKey         String
+  analysis           String?  // JSON stored as String
+  secretFindingCount Int      @default(0)
+  createdAt          DateTime @default(now())
+  files              SnapshotFile[]
+  bugReports         BugReport[]
+
+  @@unique([projectId, contentHash])
+  @@index([projectId, createdAt])
+}
+
+model SnapshotFile {
+  id              String       @id @default(uuid())
+  snapshotId      String
+  snapshot        RepoSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  path            String
+  size            Int
+  sha256          String
+  lineCount       Int          @default(0)
+  language        String?
+  kind            String       @default("other") // source | test | config | doc | other
+  secretFindings  String?      // JSON stored as String
+
+  @@unique([snapshotId, path])
+  @@index([snapshotId, kind])
 }
